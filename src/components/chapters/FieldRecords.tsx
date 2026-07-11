@@ -5,20 +5,20 @@ import { Settle, SetLines } from "@/components/motion/primitives";
 import HiveDiagnostic from "@/components/diagrams/HiveDiagnostic";
 
 /**
- * SHEET 02 — FIELD RECORDS
+ * SHEET 02 · FIELD RECORDS
  * Professional engagements, kept terse: the DRDO record cross-references
  * its full case study below; Madhu-Marga carries its own compact record.
- * Together they read as range — web systems and product engineering.
+ * Together they read as range · web systems and product engineering.
  */
 export default function FieldRecords() {
   return (
     <section
       id="sec-02"
-      aria-label="Field records — professional experience"
+      aria-label="Field records · professional experience"
       className="px-[calc(max(14px,2.6vw)+14px)] pt-28 sm:pt-36"
     >
       <div className="mx-auto max-w-6xl">
-        <SheetMarker num="02" title="FIELD RECORDS" right="PROFESSIONAL ENGAGEMENTS — VERIFIED" />
+        <SheetMarker num="02" title="FIELD RECORDS" right="PROFESSIONAL ENGAGEMENTS · VERIFIED" />
 
         <SetLines
           as="h2"
@@ -45,9 +45,9 @@ function Record({ rec, index }: { rec: ExperienceRecord; index: number }) {
       <article aria-label={`${rec.role}, ${rec.org}`}>
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-t border-hairline-strong pt-4">
           <p className="annotation">
-            <span className="text-signal">REC-0{index + 1}</span>
+            <span className="text-signal">REC·0{index + 1}</span>
             <span className="mx-3 text-pencil">/</span>
-            {rec.role} — {rec.org}
+            {rec.role} · {rec.org}
           </p>
           <p className="annotation text-pencil">
             {[rec.place, rec.period].filter(Boolean).join(" · ") || "RECORD ON FILE"}
@@ -61,7 +61,7 @@ function Record({ rec, index }: { rec: ExperienceRecord; index: number }) {
         <div className={`mt-8 grid gap-8 ${twoCol ? "md:grid-cols-2" : ""}`}>
           {rec.notes.map((note) => (
             <div key={note.label}>
-              <GrammarMarker index="—" label={note.label} />
+              <GrammarMarker index="·" label={note.label} />
               <p className="mt-3 max-w-xl text-[0.95rem] leading-relaxed text-ink/80">
                 {note.text}
               </p>
@@ -71,7 +71,7 @@ function Record({ rec, index }: { rec: ExperienceRecord; index: number }) {
 
         {rec.id === "mindmatrix" && (
           <div className="mt-10">
-            <GrammarMarker index="—" label="SYSTEM — HIVE DOCTOR, AS ARCHITECTED" />
+            <GrammarMarker index="·" label="SYSTEM · HIVE DOCTOR, AS ARCHITECTED" />
             <div className="mt-5">
               <HiveDiagnostic />
             </div>
@@ -80,7 +80,7 @@ function Record({ rec, index }: { rec: ExperienceRecord; index: number }) {
 
         <div className="mt-8 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-3 border-t border-hairline pt-4">
           <p className="annotation text-pencil">
-            DEMONSTRATES —{" "}
+            DEMONSTRATES:{" "}
             <span className="text-ink/75">{rec.demonstrates.join("  ·  ")}</span>
           </p>
           {rec.crossRef && (

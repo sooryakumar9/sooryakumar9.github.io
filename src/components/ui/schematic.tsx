@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { DrawnRule } from "@/components/motion/primitives";
 
-/** SEC 0N / TITLE — the sheet header row every chapter opens with */
+/** SEC 0N / TITLE · the sheet header row every chapter opens with */
 export function SheetMarker({
   num,
   title,
@@ -38,7 +38,7 @@ export function GrammarMarker({ label, index }: { label: string; index: string }
   );
 }
 
-/** |← label →| — a measured quantity drawn as a dimension line, never a stat card */
+/** |← label →| · a measured quantity drawn as a dimension line, never a stat card */
 export function DimensionLine({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3 text-signal" role="figure" aria-label={label}>

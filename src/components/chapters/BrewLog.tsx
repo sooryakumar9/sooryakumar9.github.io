@@ -20,7 +20,7 @@ export default function BrewLog() {
         data-cursor={open ? "SEAL" : "BREW"}
         className="margin-note cursor-pointer text-right transition-colors hover:text-signal"
       >
-        fig. ☕ — the system that runs the operator
+        fig. ☕ · the system that runs the operator
       </button>
 
       <AnimatePresence>
@@ -36,7 +36,7 @@ export default function BrewLog() {
               viewBox="0 0 260 190"
               className="mt-4 block w-64"
               role="img"
-              aria-label="Schematic of a V60 pour-over: kettle at 93 degrees, a 1 to 15 ratio, total brew time 2 minutes 45 seconds, output one engineer, operational"
+              aria-label="Schematic of a V60 pour over: kettle at 93 degrees, a 1 to 15 ratio, total brew time 2 minutes 45 seconds, output one engineer, operational"
             >
               {/* kettle */}
               <DrawPath d="M 30 30 h 50 v 26 h -50 Z M 80 38 l 16 -8" className="stroke-inked" />
@@ -51,7 +51,7 @@ export default function BrewLog() {
               {/* cup */}
               <DrawPath d="M 108 136 h 44 v 24 h -44 Z" className="stroke-inked" delay={0.9} />
               <text x="172" y="126" className="svg-label-faint">t = 2:45</text>
-              <text x="30" y="180" className="svg-label">OUTPUT — ONE ENGINEER, OPERATIONAL</text>
+              <text x="30" y="180" className="svg-label">OUTPUT · ONE ENGINEER, OPERATIONAL</text>
             </svg>
           </motion.figure>
         )}

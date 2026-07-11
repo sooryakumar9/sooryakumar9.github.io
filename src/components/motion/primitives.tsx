@@ -33,13 +33,13 @@ export function useMediaQuery(query: string): boolean {
   );
 }
 
-/** true when the visitor asked for reduced motion — every primitive respects it */
+/** true when the visitor asked for reduced motion · every primitive respects it */
 export function useReducedMotionSafe(): boolean {
   return useMediaQuery("(prefers-reduced-motion: reduce)");
 }
 
 /**
- * Draw — an SVG path that draws itself in like a plotter stroke.
+ * Draw · an SVG path that draws itself in like a plotter stroke.
  * Reduced motion: rendered fully drawn.
  */
 export function DrawPath({
@@ -68,7 +68,7 @@ export function DrawPath({
 }
 
 /**
- * Set — type sets like print: masked, line by line, tight and fast.
+ * Set · type sets like print: masked, line by line, tight and fast.
  * Reduced motion: rendered set.
  */
 export function SetLines({
@@ -89,7 +89,7 @@ export function SetLines({
   style?: CSSProperties;
 }) {
   const reduced = useReducedMotionSafe();
-  // observe the un-translated wrapper — the masked spans start clipped out of
+  // observe the un-translated wrapper · the masked spans start clipped out of
   // view, so an observer on the spans themselves would never fire
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.3 });
@@ -98,7 +98,7 @@ export function SetLines({
       {lines.map((line, i) => (
         <span key={i} className="block overflow-hidden">
           {reduced ? (
-            // plain element — transforms are disabled under reduced motion,
+            // plain element · transforms are disabled under reduced motion,
             // so a motion.span would stay stuck at its initial offset
             <span className={`block ${lineClassName ?? ""}`}>{line}</span>
           ) : (
@@ -122,7 +122,7 @@ export function SetLines({
 }
 
 /**
- * DrawnRule — a horizontal hairline that plots itself in, left to right.
+ * DrawnRule · a horizontal hairline that plots itself in, left to right.
  * Used for sheet-marker rules so each chapter opens like a fresh sheet.
  */
 export function DrawnRule() {
@@ -143,7 +143,7 @@ export function DrawnRule() {
 }
 
 /**
- * Settle — content settles into place with a small, fast shift.
+ * Settle · content settles into place with a small, fast shift.
  * Used sparingly; nothing on this site floats.
  */
 export function Settle({

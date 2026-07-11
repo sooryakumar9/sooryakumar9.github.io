@@ -25,34 +25,34 @@ const instrument = Instrument_Serif({
 });
 
 const description =
-  "Full-stack software developer in Bengaluru. Complete products across frontend, backend, data and AI — simulation automation at DRDO, retrieval pipelines, secure messaging experiments.";
+  "Full stack software developer in Bengaluru. Complete products across frontend, backend, data and AI, with simulation automation at DRDO, retrieval pipelines and secure messaging experiments.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://sooryakumar.vercel.app"),
   title: {
-    default: "Soorya Kumar — Full-Stack Software Developer",
-    template: "%s — Soorya Kumar",
+    default: "Soorya Kumar · Full Stack Software Developer",
+    template: "%s · Soorya Kumar",
   },
   description,
   keywords: [
     "Soorya Kumar",
-    "full-stack developer",
+    "full stack developer",
     "software developer",
     "Bengaluru",
     "AI engineering",
     "RAG",
     "automation",
-    "post-quantum cryptography",
+    "quantum resistant cryptography",
   ],
   openGraph: {
-    title: "Soorya Kumar — Full-Stack Software Developer",
+    title: "Soorya Kumar · Full Stack Software Developer",
     description,
     type: "website",
     locale: "en_IN",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Soorya Kumar — Full-Stack Software Developer",
+    title: "Soorya Kumar · Full Stack Software Developer",
     description,
   },
   robots: { index: true, follow: true },

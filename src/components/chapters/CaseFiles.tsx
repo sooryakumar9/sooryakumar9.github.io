@@ -16,16 +16,16 @@ const DIAGRAMS: Record<CaseStudy["diagram"], ComponentType> = {
 };
 
 /**
- * SHEET 02 — CASE FILES
+ * SHEET 02 · CASE FILES
  * Completed work. Shared grammar (context → idea → system → engineering →
  * outcome); a unique living diagram per case.
  */
 export default function CaseFiles() {
   return (
-    <section id="sec-03" aria-label="Case files — completed work">
+    <section id="sec-03" aria-label="Case files · completed work">
       <div className="px-[calc(max(14px,2.6vw)+14px)] pt-28 sm:pt-36">
         <div className="mx-auto max-w-6xl">
-          <SheetMarker num="03" title="CASE FILES" right="COMPLETED WORK — DRAWN AS BUILT" />
+          <SheetMarker num="03" title="CASE FILES" right="COMPLETED WORK · DRAWN AS BUILT" />
           <SetLines
             as="h2"
             lines={["What I've", "built"]}
@@ -34,7 +34,7 @@ export default function CaseFiles() {
             style={{ fontSize: "clamp(2.6rem, 7vw, 6rem)", fontWeight: 800 }}
           />
           <p className="annotation mt-6 max-w-md text-pencil">
-            Four systems, drawn as built. Each schematic below is live — run it.
+            Four systems, drawn as built. Each schematic below is live. Run it.
           </p>
         </div>
       </div>
@@ -73,7 +73,7 @@ function CaseHeader({ cs }: { cs: CaseStudy }) {
   return (
     <Settle>
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-t border-hairline pt-4">
-        <p className="annotation text-signal">CS-0{cs.index}</p>
+        <p className="annotation text-signal">CS·0{cs.index}</p>
         <p className="annotation text-pencil">
           {cs.org ?? "INDEPENDENT PROJECT"}
           {cs.role ? ` · ${cs.role}` : ""}
@@ -100,7 +100,7 @@ function CaseHeader({ cs }: { cs: CaseStudy }) {
 function CaseFile({ cs }: { cs: CaseStudy }) {
   const Diagram = DIAGRAMS[cs.diagram];
 
-  // compact utility record — smaller drawing, merged prose, honest scale
+  // compact utility record · smaller drawing, merged prose, honest scale
   if (cs.compact) {
     return (
       <article id={`case-${cs.id}`} className="pt-24 sm:pt-28">
@@ -109,7 +109,7 @@ function CaseFile({ cs }: { cs: CaseStudy }) {
             <CaseHeader cs={cs} />
             <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_320px] lg:gap-14">
               <div>
-                <GrammarMarker index="01" label="SYSTEM — LIVE SCHEMATIC" />
+                <GrammarMarker index="01" label="SYSTEM · LIVE SCHEMATIC" />
                 <div className="mt-5">
                   <Diagram />
                 </div>
@@ -121,7 +121,7 @@ function CaseFile({ cs }: { cs: CaseStudy }) {
                 </p>
                 <p className="mt-5 font-medium leading-snug">{cs.outcome}</p>
                 <div className="annotation mt-7 space-y-2 border-t border-hairline pt-3">
-                  <p className="text-pencil">DRAWN WITH — {cs.tech.join(" · ")}</p>
+                  <p className="text-pencil">DRAWN WITH · {cs.tech.join(" · ")}</p>
                   <CaseActions cs={cs} />
                 </div>
               </Settle>
@@ -159,7 +159,7 @@ function CaseFile({ cs }: { cs: CaseStudy }) {
 
           {/* the living diagram */}
           <div className="mt-16">
-            <GrammarMarker index="03" label="SYSTEM — LIVE SCHEMATIC" />
+            <GrammarMarker index="03" label="SYSTEM · LIVE SCHEMATIC" />
             <div className="mt-6">
               <Diagram />
             </div>
@@ -169,7 +169,7 @@ function CaseFile({ cs }: { cs: CaseStudy }) {
           {/* engineering + outcome */}
           <div className="mt-16 grid gap-10 md:grid-cols-2 md:gap-14">
             <Settle>
-              <GrammarMarker index="04" label="ENGINEERING — CONSTRAINTS OF THE DRAWING" />
+              <GrammarMarker index="04" label="ENGINEERING · CONSTRAINTS OF THE DRAWING" />
               <div className="mt-5 space-y-3.5">
                 {cs.engineering.map((line) => (
                   <LeaderNote key={line}>{line}</LeaderNote>
@@ -182,7 +182,7 @@ function CaseFile({ cs }: { cs: CaseStudy }) {
                 {cs.outcome}
               </p>
               <div className="annotation mt-8 space-y-2 border-t border-hairline pt-3">
-                <p className="text-pencil">DRAWN WITH — {cs.tech.join(" · ")}</p>
+                <p className="text-pencil">DRAWN WITH · {cs.tech.join(" · ")}</p>
                 <CaseActions cs={cs} />
               </div>
             </Settle>

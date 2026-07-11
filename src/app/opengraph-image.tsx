@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Soorya Kumar — Software Developer, Bengaluru";
+export const alt = "Soorya Kumar · Software Developer, Bengaluru";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -92,7 +92,7 @@ export default function OpengraphImage() {
           }}
         >
           <span style={{ color: SIGNAL, marginRight: 14 }}>●</span>
-          <span>Full-stack software developer — Bengaluru</span>
+          <span>Full stack software developer · Bengaluru</span>
         </div>
       </div>
     ),

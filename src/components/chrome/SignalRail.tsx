@@ -4,7 +4,7 @@ import { motion, useScroll, useSpring, useTransform } from "motion/react";
 import { useReducedMotionSafe } from "@/components/motion/primitives";
 
 /**
- * The signal — a continuous orange line in the left margin that travels
+ * The signal · a continuous orange line in the left margin that travels
  * the length of the document as the visitor scrolls. It is the site's
  * only progress indication.
  */

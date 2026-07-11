@@ -10,7 +10,7 @@ import {
 } from "@/components/motion/primitives";
 
 /**
- * SHEET 00 — SIGNAL
+ * SHEET 00 · SIGNAL
  * Paper. Silence. One orange line traces across the sheet, passes through
  * INPUT → SYSTEM → OUTPUT, then carves out the name and continues down the
  * page. The trace is the loading sequence; there is no separate preloader.
@@ -18,7 +18,7 @@ import {
 
 // node centers align with the 3-column HTML label grid below the svg
 const NODES = [
-  { label: "INPUT", sub: "a real-world problem", at: 0.3 },
+  { label: "INPUT", sub: "a real world problem", at: 0.3 },
   { label: "SYSTEM", sub: "software, end to end", at: 0.65 },
   { label: "OUTPUT", sub: "something people use", at: 1.0 },
 ] as const;
@@ -49,7 +49,7 @@ export default function SignalHero() {
   return (
     <section
       id="sec-00"
-      aria-label="Signal — introduction"
+      aria-label="Signal · introduction"
       className="relative flex min-h-svh flex-col justify-between overflow-hidden pb-10 pt-24 sm:pt-28"
     >
       {/* ——— the plotter trace ——— */}
@@ -57,14 +57,14 @@ export default function SignalHero() {
         <Trace geo={GEOMETRY.desktop} reduced={reduced} className="hidden sm:block" />
         <Trace geo={GEOMETRY.mobile} reduced={reduced} className="block sm:hidden" />
 
-        {/* component annotations — HTML so they stay legible at every width */}
+        {/* component annotations · HTML so they stay legible at every width */}
         <div className="grid grid-cols-3 px-[calc(max(14px,2.6vw)+14px)]">
           {NODES.map((n) =>
             reduced ? (
               <p key={n.label} className="annotation text-center">
                 {n.label}
                 <span className="block normal-case tracking-normal text-pencil">
-                  — {n.sub}
+                  {n.sub}
                 </span>
               </p>
             ) : (
@@ -77,7 +77,7 @@ export default function SignalHero() {
               >
                 {n.label}
                 <span className="block normal-case tracking-normal text-pencil">
-                  — {n.sub}
+                  {n.sub}
                 </span>
               </motion.p>
             ),
@@ -134,7 +134,7 @@ function Intro({ reduced }: { reduced: boolean }) {
   const body = (
     <>
       <p className="annotation shrink-0">
-        <span className="text-signal">●</span>&nbsp;&nbsp;Full-stack software developer
+        <span className="text-signal">●</span>&nbsp;&nbsp;Full stack software developer
         <span className="block text-pencil">
           Bengaluru&nbsp;·&nbsp;{profile.coordinates}
         </span>
@@ -147,7 +147,7 @@ function Intro({ reduced }: { reduced: boolean }) {
   const cls =
     "mt-6 flex max-w-3xl flex-col gap-5 sm:mt-8 sm:flex-row sm:items-start sm:gap-10";
   if (reduced) return <div className={cls}>{body}</div>;
-  // masked rise, not a fade — mid-animation text keeps its final color,
+  // masked rise, not a fade · mid-animation text keeps its final color,
   // so the reveal never races a contrast audit or a screenshot
   return (
     <div className="overflow-hidden">
@@ -177,7 +177,7 @@ function Trace({
       viewBox={geo.viewBox}
       className={`w-full ${className ?? ""}`}
       role="img"
-      aria-label="Schematic: input, six manual steps — system, something I built — output, one click"
+      aria-label="Schematic: input, six manual steps · system, something I built · output, one click"
     >
       {reduced ? (
         <path d={geo.trace} className="stroke-live" />

@@ -114,7 +114,7 @@ export default function ChannelSelector() {
         animate={on ? { opacity: 1 } : undefined}
         transition={{ delay: reduced ? 0 : 0.15 + CHANNELS.length * 0.12 + 0.3, duration: 0.5 }}
       >
-        ● CHANNELS OPEN — SYSTEM READY FOR NEW INPUT
+        ● CHANNELS OPEN · SYSTEM READY FOR NEW INPUT
       </motion.p>
     </div>
   );

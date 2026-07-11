@@ -10,7 +10,7 @@ import {
 } from "@/components/diagrams/BenchSchematics";
 
 /**
- * SHEET 03 — ON THE BENCH
+ * SHEET 03 · ON THE BENCH
  * The atmosphere shifts: the drafting grid surfaces, stamps read DRAFT,
  * strokes are honest about their state. This is the active workspace,
  * not the archive.
@@ -19,12 +19,12 @@ export default function Bench() {
   return (
     <section
       id="sec-04"
-      aria-label="On the bench — work in progress"
+      aria-label="On the bench · work in progress"
       className="grid-paper mt-28 border-y border-hairline py-28 sm:mt-36 sm:py-36"
     >
       <div className="px-[calc(max(14px,2.6vw)+14px)]">
         <div className="mx-auto max-w-6xl">
-          <SheetMarker num="04" title="ON THE BENCH" right="ACTIVE WORKSPACE — ENTER QUIETLY" />
+          <SheetMarker num="04" title="ON THE BENCH" right="ACTIVE WORKSPACE · ENTER QUIETLY" />
 
           <div className="mt-10 flex flex-wrap items-end justify-between gap-6">
             <SetLines
@@ -34,13 +34,13 @@ export default function Bench() {
               lineClassName="[font-stretch:120%]"
               style={{ fontSize: "clamp(2.6rem, 7vw, 6rem)", fontWeight: 800 }}
             />
-            <RevStamp draft>DRAFT — REVISIONS DAILY</RevStamp>
+            <RevStamp draft>DRAFT · REVISIONS DAILY</RevStamp>
           </div>
 
           <div className="mt-8 flex max-w-2xl flex-col gap-4">
             <p className="leading-relaxed text-ink/80">
               The case files are inked. These sheets are not. Two products in
-              active development — read the strokes, they don&apos;t lie:
+              active development. Read the strokes, they do not lie:
             </p>
             <StrokeKey />
           </div>
@@ -83,7 +83,7 @@ function BenchSheet({ project, index }: { project: BenchProject; index: number }
         className="border border-hairline-strong bg-paper/60 p-6 sm:p-10"
       >
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-          <p className="annotation text-signal">BENCH-0{index + 1}</p>
+          <p className="annotation text-signal">BENCH·0{index + 1}</p>
           <p className="annotation flex items-center gap-2 text-pencil">
             <span
               aria-hidden
@@ -103,7 +103,7 @@ function BenchSheet({ project, index }: { project: BenchProject; index: number }
           {project.oneLiner}
         </p>
 
-        {/* deployment — real link or honest pending state, never a fake URL */}
+        {/* deployment · real link or honest pending state, never a fake URL */}
         <p className="annotation mt-4">
           {project.deployment.status === "live" ? (
             <a
@@ -116,7 +116,7 @@ function BenchSheet({ project, index }: { project: BenchProject; index: number }
               DEPLOYMENT: LIVE ↗
             </a>
           ) : (
-            <span className="text-pencil">DEPLOYMENT — PENDING · URL RESERVED</span>
+            <span className="text-pencil">DEPLOYMENT · PENDING · URL RESERVED</span>
           )}
         </p>
 
@@ -138,7 +138,7 @@ function BenchSheet({ project, index }: { project: BenchProject; index: number }
           {project.id === "diavo" ? <DiavoSchematic /> : <ZenproSchematic />}
         </div>
 
-        {/* honest state — three drawn layers */}
+        {/* honest state · three drawn layers */}
         <div className="mt-10 grid gap-8 border-t border-hairline pt-8 sm:grid-cols-3">
           <StateColumn kind="inked" title="EXISTS" items={project.exists} />
           <StateColumn kind="dashed" title="BEING BUILT" items={project.building} />
@@ -154,7 +154,7 @@ function BenchSheet({ project, index }: { project: BenchProject; index: number }
                 <li key={entry.date + entry.note}>
                   <span className="text-signal">{entry.date}</span>
                   <span className="normal-case tracking-normal text-ink/75">
-                    {" "}— {entry.note}
+                    {" "}· {entry.note}
                   </span>
                 </li>
               ))}
@@ -172,7 +172,7 @@ function BenchSheet({ project, index }: { project: BenchProject; index: number }
                 </span>
               </summary>
               <p className="annotation mt-3 normal-case tracking-normal text-pencil">
-                Planned ecosystem — {project.plannedTech.join(", ")}. Planned
+                Planned ecosystem · {project.plannedTech.join(", ")}. Planned
                 means planned: dashed edges in the graph below, nothing claimed
                 as shipped.
               </p>

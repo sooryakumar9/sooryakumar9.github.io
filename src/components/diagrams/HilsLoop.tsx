@@ -14,7 +14,7 @@ import { DimensionLine } from "@/components/ui/schematic";
 const STAGES = [
   { op: "LOAD", note: "model + scripts pushed to RT-LAB" },
   { op: "BUILD", note: "compiled against MATLAB R2012B" },
-  { op: "EXECUTE", note: "real-time run · telemetry live" },
+  { op: "EXECUTE", note: "real time run · telemetry live" },
   { op: "STOP", note: "run halted cleanly" },
   { op: "RESET", note: "lab returned to known state" },
 ] as const;
@@ -44,7 +44,7 @@ export default function HilsLoop() {
 
   return (
     <div ref={ref}>
-      {/* instrument controls — the real operation sequence */}
+      {/* instrument controls · the real operation sequence */}
       <div
         className="flex flex-wrap items-center gap-x-1 gap-y-2 border-y border-hairline py-3"
         role="group"
@@ -70,7 +70,7 @@ export default function HilsLoop() {
           </button>
         ))}
         <span className="annotation ml-auto hidden text-signal md:block" aria-live="polite">
-          STATE: {op} — {STAGES[stage].note}
+          STATE: {op} · {STAGES[stage].note}
         </span>
       </div>
 
@@ -78,7 +78,7 @@ export default function HilsLoop() {
         viewBox="0 0 900 372"
         className="mt-2 block w-full"
         role="img"
-        aria-label="Control loop: operator to web console to automation layer to RT-LAB, with MATLAB script management below and real-time telemetry returning to the console"
+        aria-label="Control loop: operator to web console to automation layer to RT-LAB, with MATLAB script management below and real time telemetry returning to the console"
       >
         {/* structure draws in */}
         <g>
@@ -116,25 +116,25 @@ export default function HilsLoop() {
 
         <text x="660" y="132" textAnchor="middle" className="svg-label">RT-LAB</text>
         <text x="660" y="148" textAnchor="middle" className="svg-label-faint">simulation</text>
-        <text x="660" y="162" textAnchor="middle" className="svg-label-faint">hardware-in-loop</text>
+        <text x="660" y="162" textAnchor="middle" className="svg-label-faint">hardware in loop</text>
 
         <text x="440" y="266" textAnchor="middle" className="svg-label">MATLAB R2012B</text>
         <text x="440" y="282" textAnchor="middle" className="svg-label-faint">script management</text>
         <text x="440" y="294" textAnchor="middle" className="svg-label-faint">syntax gate</text>
 
         <text x="440" y="352" textAnchor="middle" className={telemetryLive ? "svg-label-live" : "svg-label-faint"}>
-          REAL-TIME TELEMETRY {telemetryLive ? "— LIVE" : ""}
+          REAL TIME TELEMETRY {telemetryLive ? "· LIVE" : ""}
         </text>
       </svg>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
         <div className="annotation space-y-1.5">
           <p className="text-pencil">
-            BEFORE — the operator walked load, build, execute, stop, reset by hand,
+            BEFORE · the operator walked load, build, execute, stop, reset by hand,
             every session
           </p>
           <p>
-            AFTER — <span className="text-signal">the sequence is issued by the system</span>
+            AFTER · <span className="text-signal">the sequence is issued by the system</span>
           </p>
         </div>
         <div className="w-full sm:w-72">

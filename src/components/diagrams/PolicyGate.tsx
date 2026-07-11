@@ -23,7 +23,7 @@ export default function PolicyGate() {
   return (
     <div>
       <div className="flex flex-wrap items-center gap-3 border-y border-hairline py-3">
-        <span className="annotation text-pencil">EXAM WINDOW · 09:00–12:00</span>
+        <span className="annotation text-pencil">EXAM WINDOW · 09:00 to 12:00</span>
         <button
           data-cursor="TOGGLE"
           onClick={() => setArmed((a) => !a)}
@@ -37,7 +37,7 @@ export default function PolicyGate() {
           {armed ? "ARMED" : "DISARMED"}
         </button>
         <span className="annotation ml-auto hidden text-pencil sm:block" aria-live="polite">
-          {armed ? "BLOCK LIST ENFORCED — REAL TIME" : "OUTSIDE WINDOW — ALL TRAFFIC PASSES"}
+          {armed ? "BLOCK LIST ENFORCED · REAL TIME" : "OUTSIDE WINDOW · ALL TRAFFIC PASSES"}
         </span>
       </div>
 
@@ -47,8 +47,8 @@ export default function PolicyGate() {
         role="img"
         aria-label={`Policy gate: five request lines approach a filter. ${
           armed
-            ? "Exam window armed — distracting and explicit sites terminate at the gate, the exam portal and reference docs pass through to the lab machine."
-            : "Disarmed — all traffic passes."
+            ? "Exam window armed · distracting and explicit sites terminate at the gate, the exam portal and reference docs pass through to the lab machine."
+            : "Disarmed · all traffic passes."
         }`}
       >
         {REQUESTS.map((r, i) => {

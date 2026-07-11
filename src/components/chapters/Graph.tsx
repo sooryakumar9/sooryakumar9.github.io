@@ -7,10 +7,10 @@ import { SheetMarker } from "@/components/ui/schematic";
 import { Settle, SetLines } from "@/components/motion/primitives";
 
 /**
- * SHEET 04 — THE GRAPH
+ * SHEET 04 · THE GRAPH
  * Projects as primary nodes, technologies as satellites, edges = actual
  * usage (solid) or honest plans (dashed). Fundamentals sit beneath as the
- * substrate — which is exactly what fundamentals are.
+ * substrate · which is exactly what fundamentals are.
  */
 export default function Graph() {
   const { nodes, edges } = useMemo(() => buildGraph(), []);
@@ -27,7 +27,7 @@ export default function Graph() {
   }, [active, edges]);
 
   // second ring: when a technology is active, the other technologies of the
-  // projects that use it get mid-emphasis — the neighbourhood stays readable
+  // projects that use it get mid-emphasis · the neighbourhood stays readable
   const related = useMemo(() => {
     if (!active || !highlighted) return null;
     const activeNode = nodes.find((n) => n.id === active);
@@ -46,16 +46,16 @@ export default function Graph() {
     return 0.15;
   };
 
-  // the readout under the sheet — cramped hover tooltips don't survive touch
+  // the readout under the sheet · cramped hover tooltips don't survive touch
   const readout = useMemo(() => {
-    if (!active) return "HOVER OR TAP A NODE — EVERY EDGE IS REAL USAGE";
+    if (!active) return "HOVER OR TAP A NODE · EVERY EDGE IS REAL USAGE";
     const node = nodes.find((n) => n.id === active);
     if (!node) return "";
     if (node.kind === "project") {
       const techs = edges.filter((e) => e.from === active).map((e) => e.to.slice(2));
       return node.draft
-        ? `${node.label} — ON THE BENCH · PLANNED: ${techs.join(" · ") || "STACK TO BE PUBLISHED"}`
-        : `${node.label} — BUILT WITH ${techs.join(" · ")}`;
+        ? `${node.label} · ON THE BENCH · PLANNED: ${techs.join(" · ") || "STACK TO BE PUBLISHED"}`
+        : `${node.label} · BUILT WITH ${techs.join(" · ")}`;
     }
     const touching = edges.filter((e) => e.to === active);
     const proven = touching.filter((e) => !e.planned).length;
@@ -63,13 +63,13 @@ export default function Graph() {
     const parts: string[] = [];
     if (proven > 0) parts.push(`PROVEN IN ${proven} BUILT SYSTEM${proven > 1 ? "S" : ""}`);
     if (planned > 0) parts.push("EXPLORING ON THE BENCH");
-    return `${node.label.toUpperCase()} — ${parts.join(" · ")}`;
+    return `${node.label.toUpperCase()} · ${parts.join(" · ")}`;
   }, [active, nodes, edges]);
 
   return (
     <section
       id="sec-05"
-      aria-label="The graph — capability map"
+      aria-label="The graph · capability map"
       className="px-[calc(max(14px,2.6vw)+14px)] py-28 sm:py-36"
     >
       <div className="mx-auto max-w-6xl">
@@ -84,8 +84,8 @@ export default function Graph() {
             style={{ fontSize: "clamp(2.6rem, 7vw, 6rem)", fontWeight: 800 }}
           />
           <p className="annotation max-w-xs text-pencil">
-            no logo walls, no progress bars — touch a node; the edges are the
-            résumé
+            no logo walls, no progress bars. touch a node and the edges are
+            the résumé
           </p>
         </div>
 
@@ -96,7 +96,7 @@ export default function Graph() {
             role="group"
             aria-label="Interactive graph of projects and the technologies they use"
           >
-            {/* the substrate — fundamentals */}
+            {/* the substrate · fundamentals */}
             {profile.fundamentals.map((f, i) => (
               <text
                 key={f}
@@ -106,7 +106,7 @@ export default function Graph() {
                 opacity={0.5}
                 aria-hidden
               >
-                — {f.toUpperCase()}
+                · {f.toUpperCase()}
               </text>
             ))}
 
@@ -145,7 +145,7 @@ export default function Graph() {
                 key={n.id}
                 role="button"
                 tabIndex={0}
-                aria-label={`${n.label} — ${n.kind === "project" ? "project" : "technology"}${n.draft ? ", in development" : ""}`}
+                aria-label={`${n.label} · ${n.kind === "project" ? "project" : "technology"}${n.draft ? ", in development" : ""}`}
                 data-cursor="TRACE"
                 onMouseEnter={() => setActive(n.id)}
                 onFocus={() => setActive(n.id)}
@@ -220,7 +220,7 @@ export default function Graph() {
         </div>
         <p className="annotation mt-2 text-pencil lg:hidden">← drag the sheet to pan →</p>
 
-        {/* live readout — works for hover and for touch */}
+        {/* live readout · works for hover and for touch */}
         <p
           className="annotation mt-5 min-h-[1.5em] border-t border-hairline-strong pt-3 text-signal"
           aria-live="polite"
@@ -231,11 +231,11 @@ export default function Graph() {
         <Settle>
           <div className="mt-5 grid gap-4 border-t border-hairline pt-5 md:grid-cols-2">
             <p className="annotation text-pencil">
-              SOLID EDGE — used in a shipped system&nbsp;&nbsp;·&nbsp;&nbsp;DASHED
-              EDGE / * — planned on the bench
+              SOLID EDGE · used in a shipped system&nbsp;&nbsp;·&nbsp;&nbsp;DASHED
+              EDGE / * · planned on the bench
             </p>
             <p className="annotation text-pencil md:text-right">
-              ALSO IN THE DRAWER — {profile.additionalTooling.join(" · ")}
+              ALSO IN THE DRAWER · {profile.additionalTooling.join(" · ")}
             </p>
           </div>
         </Settle>

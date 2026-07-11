@@ -5,18 +5,18 @@ import BrewLog from "@/components/chapters/BrewLog";
 import ChannelSelector from "@/components/chapters/ChannelSelector";
 
 /**
- * SHEET 05 — TITLE BLOCK
+ * SHEET 05 · TITLE BLOCK
  * Every engineering drawing ends in a title block. So does this one.
  */
 export default function TitleBlock() {
   return (
     <footer
       id="sec-06"
-      aria-label="Title block — contact"
+      aria-label="Title block · contact"
       className="px-[calc(max(14px,2.6vw)+14px)] pb-10 pt-28 sm:pt-36"
     >
       <div className="mx-auto max-w-6xl">
-        <SheetMarker num="06" title="TITLE BLOCK" right="END OF DOCUMENT — SIGNAL TERMINATES HERE" />
+        <SheetMarker num="06" title="TITLE BLOCK" right="END OF DOCUMENT · SIGNAL TERMINATES HERE" />
 
         <div className="mt-12 grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
           <div>
@@ -30,7 +30,7 @@ export default function TitleBlock() {
             <Settle delay={0.2}>
               <p className="mt-6 max-w-md leading-relaxed text-ink/75">
                 Roles, ambitious products, or an argument about retrieval
-                pipelines — every route below is live. The channels are
+                pipelines. Every route below is live. The channels are
                 classical, but they work.
               </p>
               <svg
@@ -39,7 +39,7 @@ export default function TitleBlock() {
                 aria-hidden
               >
                 <circle cx="14" cy="42" r="6" className="fill-none stroke-inked" />
-                <text x="30" y="30" className="svg-label-faint">VISITOR — YOU</text>
+                <text x="30" y="30" className="svg-label-faint">VISITOR · YOU</text>
                 <path d="M 20 42 H 150" className="flow" />
                 <path d="M 150 22 H 260 V 62 H 150 Z" className="stroke-inked" fill="none" />
                 <text x="205" y="39" textAnchor="middle" className="svg-label">CHANNEL</text>
@@ -85,15 +85,15 @@ export default function TitleBlock() {
             </Cell>
             <Cell label="REVISION">
               {profile.rev}
-              <span className="block text-pencil">SCALE — NTS</span>
+              <span className="block text-pencil">SCALE · NTS</span>
             </Cell>
           </div>
         </Settle>
 
         <div className="mt-6 flex flex-wrap items-start justify-between gap-6">
           <p className="annotation max-w-md text-pencil">
-            Set in Archivo, IBM Plex Mono &amp; Instrument Serif. Drawn with
-            Next.js, Tailwind and Motion. No template was harmed — none was
+            Set in Archivo, IBM Plex Mono and Instrument Serif. Drawn with
+            Next.js, Tailwind and Motion. No template was harmed and none was
             used.
           </p>
           <BrewLog />

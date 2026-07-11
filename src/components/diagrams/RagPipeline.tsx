@@ -21,11 +21,11 @@ import {
  */
 
 const STAGES = [
-  "01 PARSE — the resume is read and split into chunks",
-  "02 CHUNK — sections become retrievable units",
-  "03 EMBED + INDEX — chunks join scraped openings in FAISS",
-  "04 RETRIEVE — semantic nearest neighbours, not keyword luck",
-  "05 REASON — GPT grounds feedback, roles and openings in what it retrieved",
+  "01 PARSE · the resume is read and split into chunks",
+  "02 CHUNK · sections become retrievable units",
+  "03 EMBED + INDEX · chunks join scraped openings in FAISS",
+  "04 RETRIEVE · semantic nearest neighbours, not keyword luck",
+  "05 REASON · GPT grounds feedback, roles and openings in what it retrieved",
 ] as const;
 
 const DOC = Array.from({ length: 12 }, (_, i) => ({ x: 115, y: 116 + i * 15 }));
@@ -150,8 +150,8 @@ function Scene({ stage }: { stage: number }) {
         {/* embedding field */}
         <motion.g initial={{ opacity: 0 }} animate={{ opacity: fieldOn ? 1 : 0 }} transition={{ duration: 0.4 }}>
           <path d="M 340 70 H 640 V 310 H 340 Z" className="stroke-dashed" />
-          <text x="340" y="56" className="svg-label">FAISS INDEX — EMBEDDING SPACE</text>
-          <text x="340" y="332" className="svg-label-faint">∘ scraped openings — linkedin · selenium</text>
+          <text x="340" y="56" className="svg-label">FAISS INDEX · EMBEDDING SPACE</text>
+          <text x="340" y="332" className="svg-label-faint">∘ scraped openings · linkedin · selenium</text>
           <text x="340" y="348" className="svg-label-faint">● resume chunks</text>
           {JOBS.map((p, i) => (
             <circle

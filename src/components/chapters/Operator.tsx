@@ -3,7 +3,7 @@ import { SheetMarker, LeaderNote } from "@/components/ui/schematic";
 import { Settle } from "@/components/motion/primitives";
 
 /**
- * SHEET 01 — OPERATOR
+ * SHEET 01 · OPERATOR
  * Who is drawing this document, and why. Short editorial statement,
  * facts as leader notes, human voice confined to the margin.
  */
@@ -11,7 +11,7 @@ export default function Operator() {
   return (
     <section
       id="sec-01"
-      aria-label="Operator — about"
+      aria-label="Operator · about"
       className="px-[calc(max(14px,2.6vw)+14px)] py-28 sm:py-36"
     >
       <div className="mx-auto max-w-6xl">

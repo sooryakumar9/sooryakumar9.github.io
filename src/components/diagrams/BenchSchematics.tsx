@@ -3,13 +3,13 @@
 import { DrawPath } from "@/components/motion/primitives";
 
 /**
- * Bench schematics — deliberately unfinished drawings.
+ * Bench schematics · deliberately unfinished drawings.
  * Stroke semantics carry the honesty: inked = exists,
  * dashed = being built, pencil = being explored.
  */
 
 /**
- * Product previews — small drawn fragments that hint at what each bench
+ * Product previews · small drawn fragments that hint at what each bench
  * project feels like as a product, in the same ink language.
  */
 export function ZenproBriefPreview() {
@@ -54,7 +54,7 @@ export function DiavoPlatePreview() {
       viewBox="0 0 220 260"
       className="block w-full max-w-[220px]"
       role="img"
-      aria-label="Pencil sketch of a dinner plate with a measurement line — food, measured gently"
+      aria-label="Pencil sketch of a dinner plate with a measurement line · food, measured gently"
     >
       <DrawPath d="M 110 40 a 78 78 0 1 0 0.1 0 Z" className="stroke-pencil" duration={1} />
       <DrawPath d="M 110 70 a 48 48 0 1 0 0.1 0 Z" className="stroke-pencil" delay={0.3} />
@@ -80,22 +80,22 @@ export function DiavoSchematic() {
       role="img"
       aria-label="Draft schematic: food data flows into a product core being built, toward everyday dietary decisions. Most strokes are still pencil."
     >
-      {/* exists — problem framing */}
+      {/* exists · problem framing */}
       <DrawPath d="M 60 40 H 840" className="stroke-inked" duration={1} />
-      <text x="60" y="28" className="svg-label">PROBLEM FRAMING — SETTLED</text>
+      <text x="60" y="28" className="svg-label">PROBLEM FRAMING · SETTLED</text>
 
       {/* explored ends */}
       <DrawPath d="M 60 100 H 220 V 180 H 60 Z" className="stroke-pencil" delay={0.2} />
       <text x="140" y="132" textAnchor="middle" className="svg-label-faint">FOOD +</text>
       <text x="140" y="148" textAnchor="middle" className="svg-label-faint">NUTRITION DATA</text>
-      <text x="140" y="164" textAnchor="middle" className="svg-label-faint">structure — exploring</text>
+      <text x="140" y="164" textAnchor="middle" className="svg-label-faint">structure · exploring</text>
 
       <DrawPath d="M 680 100 H 840 V 180 H 680 Z" className="stroke-pencil" delay={0.4} />
       <text x="760" y="132" textAnchor="middle" className="svg-label-faint">EVERYDAY</text>
       <text x="760" y="148" textAnchor="middle" className="svg-label-faint">DECISIONS</text>
-      <text x="760" y="164" textAnchor="middle" className="svg-label-faint">interface — exploring</text>
+      <text x="760" y="164" textAnchor="middle" className="svg-label-faint">interface · exploring</text>
 
-      {/* being built — the core */}
+      {/* being built · the core */}
       <DrawPath d="M 360 90 H 540 V 190 H 360 Z" className="stroke-dashed" delay={0.3} />
       <text x="450" y="128" textAnchor="middle" className="svg-label">PRODUCT CORE</text>
       <text x="450" y="146" textAnchor="middle" className="svg-label-faint">understanding food</text>
@@ -104,7 +104,7 @@ export function DiavoSchematic() {
       <DrawPath d="M 220 140 H 360" className="stroke-pencil" delay={0.5} />
       <DrawPath d="M 540 140 H 680" className="stroke-pencil" delay={0.6} />
 
-      <text x="60" y="232" className="svg-label-faint">STACK — TO BE PUBLISHED · details land here as the product firms up</text>
+      <text x="60" y="232" className="svg-label-faint">STACK · TO BE PUBLISHED · details land here as the product firms up</text>
     </svg>
   );
 }
@@ -116,11 +116,11 @@ export function ZenproSchematic() {
       viewBox="0 0 900 300"
       className="block w-full"
       role="img"
-      aria-label="Draft schematic: many sources feed an aggregation pipeline — ingest, embed, rank — ending in a morning brief. Ingest and brief are dashed, being built; embedding and ranking are pencil, being explored."
+      aria-label="Draft schematic: many sources feed an aggregation pipeline · ingest, embed, rank · ending in a morning brief. Ingest and brief are dashed, being built; embedding and ranking are pencil, being explored."
     >
-      {/* exists — the architecture line */}
+      {/* exists · the architecture line */}
       <DrawPath d="M 60 40 H 840" className="stroke-inked" duration={1} />
-      <text x="60" y="28" className="svg-label">ARCHITECTURE SKETCHED END TO END — FIRST BUILD LIVE</text>
+      <text x="60" y="28" className="svg-label">ARCHITECTURE SKETCHED END TO END · FIRST BUILD LIVE</text>
 
       {/* sources */}
       {sources.map((s, i) => (
@@ -137,29 +137,29 @@ export function ZenproSchematic() {
         </g>
       ))}
 
-      {/* ingest — being built */}
+      {/* ingest · being built */}
       <DrawPath d="M 250 120 H 370 V 200 H 250 Z" className="stroke-dashed" delay={0.5} />
       <text x="310" y="152" textAnchor="middle" className="svg-label">INGEST</text>
       <text x="310" y="168" textAnchor="middle" className="svg-label-faint">aggregation</text>
       <text x="310" y="184" textAnchor="middle" className="svg-label-faint">pipeline</text>
-      <text x="310" y="222" textAnchor="middle" className="svg-label-faint">supabase · postgres — planned</text>
+      <text x="310" y="222" textAnchor="middle" className="svg-label-faint">supabase · postgres · planned</text>
 
-      {/* embed — exploring */}
+      {/* embed · exploring */}
       <DrawPath d="M 370 160 H 420" className="stroke-dashed" delay={0.6} />
       <DrawPath d="M 420 120 H 540 V 200 H 420 Z" className="stroke-pencil" delay={0.65} />
       <text x="480" y="152" textAnchor="middle" className="svg-label-faint">EMBED</text>
       <text x="480" y="168" textAnchor="middle" className="svg-label-faint">semantic</text>
       <text x="480" y="184" textAnchor="middle" className="svg-label-faint">exploring</text>
 
-      {/* rank — exploring */}
+      {/* rank · exploring */}
       <DrawPath d="M 540 160 H 590" className="stroke-pencil" delay={0.7} />
       <DrawPath d="M 590 120 H 700 V 200 H 590 Z" className="stroke-pencil" delay={0.75} />
       <text x="645" y="152" textAnchor="middle" className="svg-label-faint">RANK</text>
       <text x="645" y="168" textAnchor="middle" className="svg-label-faint">relevance</text>
       <text x="645" y="184" textAnchor="middle" className="svg-label-faint">exploring</text>
-      <text x="645" y="222" textAnchor="middle" className="svg-label-faint">cache — redis, planned</text>
+      <text x="645" y="222" textAnchor="middle" className="svg-label-faint">cache · redis, planned</text>
 
-      {/* brief — being built */}
+      {/* brief · being built */}
       <DrawPath d="M 700 160 H 740" className="stroke-pencil" delay={0.8} />
       <DrawPath d="M 740 110 H 880 V 210 H 740 Z" className="stroke-dashed" delay={0.85} />
       <text x="810" y="146" textAnchor="middle" className="svg-label">MORNING</text>
@@ -168,7 +168,7 @@ export function ZenproSchematic() {
       <text x="810" y="234" textAnchor="middle" className="svg-label-faint">next.js · typescript</text>
 
       <text x="60" y="286" className="svg-label-faint">
-        AI SUMMARIZATION + RECOMMENDATIONS — exploring across embed / rank / brief
+        AI SUMMARIZATION + RECOMMENDATIONS · exploring across embed / rank / brief
       </text>
     </svg>
   );

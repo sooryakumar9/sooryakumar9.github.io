@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Lenis from "lenis";
 
 /**
- * Lenis smooth scrolling — desktop fine-pointer only, disabled entirely
+ * Lenis smooth scrolling · desktop fine-pointer only, disabled entirely
  * under prefers-reduced-motion. Touch devices keep native scrolling.
  */
 export default function SmoothScroll() {

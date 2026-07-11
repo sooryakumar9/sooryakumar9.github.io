@@ -5,8 +5,8 @@ import { useInView } from "motion/react";
 import { DrawPath, useReducedMotionSafe } from "@/components/motion/primitives";
 
 /**
- * Madhu-Marga's Hive Doctor, drawn as architecture — not simulated.
- * Five structured observations feed a rule-based engine; four registers
+ * Madhu-Marga's Hive Doctor, drawn as architecture · not simulated.
+ * Five structured observations feed a rule based engine; four registers
  * come out. Selecting a signal traces the information flow. No diagnostic
  * rules are invented here: the drawing shows how the system is shaped,
  * not what the production engine would decide.
@@ -21,7 +21,7 @@ const SIGNALS = [
 ] as const;
 
 const OUTPUTS = [
-  { label: "HEALTH SCORE", sub: "0–100%", y: 76 },
+  { label: "HEALTH SCORE", sub: "0 to 100%", y: 76 },
   { label: "RISK LEVEL", sub: "classified", y: 148 },
   { label: "DIAGNOSIS", sub: "explained", y: 220 },
   { label: "RECOMMENDED ACTION", sub: "actionable", y: 292 },
@@ -80,7 +80,7 @@ export default function HiveDiagnostic() {
         viewBox="0 0 900 370"
         className="mt-2 block w-full"
         role="img"
-        aria-label="Architecture of the Hive Doctor: five structured observations — queen presence, pest sightings, hive activity, temperature, honey flow — feed a rule-based hive intelligence engine, which produces a health score, a risk classification, a diagnosis and a recommended action"
+        aria-label="Architecture of the Hive Doctor: five structured observations · queen presence, pest sightings, hive activity, temperature, honey flow · feed a rule based hive intelligence engine, which produces a health score, a risk classification, a diagnosis and a recommended action"
       >
         {/* observation nodes */}
         {SIGNALS.map((s, i) => (
@@ -104,16 +104,16 @@ export default function HiveDiagnostic() {
           </g>
         ))}
 
-        {/* the engine — one hexagon, the only hive geometry on the sheet */}
+        {/* the engine · one hexagon, the only hive geometry on the sheet */}
         <DrawPath d={HEX} className="stroke-inked" delay={0.4} duration={0.8} />
         <text x="450" y="170" textAnchor="middle" className="svg-label">HIVE</text>
         <text x="450" y="186" textAnchor="middle" className="svg-label">INTELLIGENCE</text>
         <text x="450" y="202" textAnchor="middle" className="svg-label">ENGINE</text>
         <text x="450" y="272" textAnchor="middle" className="svg-label-faint">
-          rule-based · heuristic
+          rule based · heuristic
         </text>
         <text x="450" y="288" textAnchor="middle" className="svg-label-faint">
-          expert logic, encoded — no ML
+          expert logic, encoded · no ML
         </text>
 
         {/* output registers */}
@@ -138,7 +138,7 @@ export default function HiveDiagnostic() {
       </svg>
 
       <p className="annotation mt-3 border-t border-hairline pt-3 text-signal" aria-live="polite">
-        TRACING — {SIGNALS[signal].label} → ENGINE → OUTPUT REGISTERS
+        TRACING · {SIGNALS[signal].label} → ENGINE → OUTPUT REGISTERS
       </p>
     </div>
   );
