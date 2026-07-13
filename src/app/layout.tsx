@@ -28,7 +28,7 @@ const description =
   "Full stack software developer in Bengaluru. Complete products across frontend, backend, data and AI, with simulation automation at DRDO, retrieval pipelines and secure messaging experiments.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sooryakumar.vercel.app"),
+  metadataBase: new URL("https://sooryakumar9.github.io"),
   title: {
     default: "Soorya Kumar · Full Stack Software Developer",
     template: "%s · Soorya Kumar",
