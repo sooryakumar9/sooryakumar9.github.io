@@ -14,7 +14,7 @@ export interface CaseStudy {
   /** build period, from the résumé */
   period?: string;
   /** which living diagram this case renders */
-  diagram: "hils" | "rag" | "channel" | "gate";
+  diagram: "hils" | "rag" | "channel" | "gate" | "banking";
   /** the inverted (ink) chapter */
   inverted?: boolean;
   /** compact single-column presentation for small utilities */
@@ -55,6 +55,8 @@ export interface BenchProject {
   exploring: string[];
   /** planned stack — drawn with dashed edges in the graph */
   plannedTech: string[];
+  /** fuller written stack for the technical notes, when a build is real */
+  techNotes?: string;
   devLog: DevLogEntry[];
   /** slots for future screenshots / demos / updates */
   media?: { kind: "image" | "video"; src: string; alt: string }[];

@@ -79,7 +79,7 @@ export const caseStudies: CaseStudy[] = [
     ],
     outcome:
       "Proof that quantum safe communication is buildable now with ordinary tools, and a concrete look at exactly what breaks if you wait.",
-    tech: ["Python", "JavaScript", "HTML/CSS"],
+    tech: ["Python", "JavaScript", "Flask"],
   },
   {
     id: "blocker",
@@ -103,5 +103,27 @@ export const caseStudies: CaseStudy[] = [
     outcome:
       "A deliberately small tool that does one institutional job completely. Not everything needs a pipeline.",
     tech: ["Python", "Tkinter"],
+  },
+  {
+    id: "banking",
+    index: 5,
+    title: "Banking Application with Face Recognition",
+    subtitle: "A full stack account where your face is the second key",
+    period: "2024 to 2025",
+    diagram: "banking",
+    context:
+      "A password is a single point of failure. If it leaks, the account is wide open. Banking needs a second factor that a thief cannot simply copy from a note or a breach.",
+    idea:
+      "Put face recognition on top of the password, so both the login and every transaction ask for something the account holder is, not only something they know.",
+    system:
+      "A full stack MERN application. React on the front, Express and Node behind secure REST APIs, and MongoDB holding accounts and transactions. Face recognition sits in front of login and transfers as an additional authentication factor, with session handling carried across the whole flow.",
+    engineering: [
+      "Face recognition as a second factor layered on top of the password",
+      "Secure REST APIs and session handling across login and transactions",
+      "Core banking workflows for accounts and transfers backed by MongoDB",
+    ],
+    outcome:
+      "A working banking app where a stolen password is not enough. The face gate stands between an imposter and the money.",
+    tech: ["MongoDB", "Express.js", "React.js", "Node.js"],
   },
 ];

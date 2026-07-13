@@ -50,17 +50,27 @@ export const benchProjects: BenchProject[] = [
       "Nutrition information is abundant and unusable. Labels, databases and advice that never quite answer the question a person actually has at a meal.",
     vision:
       "Thoughtful software between food data and daily decisions. Precise underneath, human on the surface. A complete product, not a calorie widget.",
-    deployment: { status: "pending" },
-    exists: ["Product concept and problem framing", "Early design direction"],
-    building: ["Core product design", "Application foundation"],
+    deployment: { status: "live", href: "https://diavo.vercel.app" },
+    exists: [
+      "Live build on Vercel",
+      "Email and password authentication on Supabase",
+      "A searchable corpus of 870 dishes with a zero dependency fuzzy search",
+      "Row level security scoped to each owner",
+    ],
+    building: [
+      "Personalized dietary tracking",
+      "Food detail and nutrition views on Drizzle and Postgres",
+    ],
     exploring: [
       "How nutrition data should be structured for real questions",
-      "What a genuinely intuitive food interface looks like",
+      "Photo verification for dishes from open image sources",
     ],
-    plannedTech: [],
+    plannedTech: ["Next.js", "TypeScript", "Supabase", "PostgreSQL"],
+    techNotes:
+      "Next.js 16 with React 19 and strict TypeScript, Tailwind CSS v4 and Motion, Supabase auth and Postgres, Drizzle ORM, Zod validation, TanStack Query, and row level security over a static corpus of 870 dishes.",
     devLog: [
       { date: "June 2026", note: "Problem space mapped and product direction settled." },
-      { date: "July 2026", note: "Design exploration in progress." },
+      { date: "July 2026", note: "First build live on Vercel with auth and food search." },
     ],
   },
 ];

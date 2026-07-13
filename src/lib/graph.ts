@@ -24,34 +24,45 @@ export interface GraphEdge {
 }
 
 const PROJECT_POS: Record<string, { x: number; y: number; label: string }> = {
-  hils: { x: 220, y: 150, label: "HILS AUTOMATION" },
-  rag: { x: 500, y: 110, label: "RESUME ANALYZER" },
-  qsecure: { x: 780, y: 150, label: "Q-SECURE CHAT" },
-  mindmatrix: { x: 220, y: 285, label: "MADHU-MARGA" },
-  blocker: { x: 220, y: 420, label: "WEBSITE BLOCKER" },
-  diavo: { x: 500, y: 460, label: "DIAVO" },
-  zenpro: { x: 780, y: 420, label: "ZENPRO" },
+  hils: { x: 210, y: 150, label: "HILS AUTOMATION" },
+  rag: { x: 500, y: 120, label: "RESUME ANALYZER" },
+  qsecure: { x: 800, y: 150, label: "Q-SECURE CHAT" },
+  mindmatrix: { x: 205, y: 300, label: "MADHU-MARGA" },
+  blocker: { x: 210, y: 450, label: "WEBSITE BLOCKER" },
+  banking: { x: 210, y: 610, label: "BANKING APP" },
+  diavo: { x: 480, y: 470, label: "DIAVO" },
+  zenpro: { x: 760, y: 430, label: "ZENPRO" },
 };
 
 const TECH_POS: Record<string, { x: number; y: number }> = {
-  Python: { x: 400, y: 285 },
-  "RT-LAB": { x: 105, y: 75 },
-  MATLAB: { x: 80, y: 235 },
-  LangChain: { x: 350, y: 55 },
-  FAISS: { x: 555, y: 235 },
-  "OpenAI API": { x: 645, y: 55 },
-  Selenium: { x: 500, y: 210 },
-  JavaScript: { x: 905, y: 80 },
-  "HTML/CSS": { x: 920, y: 235 },
-  Tkinter: { x: 90, y: 510 },
-  Kotlin: { x: 65, y: 300 },
-  "Jetpack Compose": { x: 110, y: 375 },
-  Room: { x: 330, y: 355 },
-  "Next.js": { x: 915, y: 320 },
-  TypeScript: { x: 930, y: 505 },
-  Supabase: { x: 700, y: 545 },
-  PostgreSQL: { x: 585, y: 560 },
-  Redis: { x: 830, y: 555 },
+  // HILS and RAG cluster, top
+  Python: { x: 405, y: 300 },
+  "RT-LAB": { x: 95, y: 70 },
+  MATLAB: { x: 70, y: 225 },
+  LangChain: { x: 360, y: 50 },
+  FAISS: { x: 565, y: 240 },
+  "OpenAI API": { x: 645, y: 50 },
+  Selenium: { x: 495, y: 220 },
+  // Q-Secure cluster, top right
+  JavaScript: { x: 905, y: 70 },
+  Flask: { x: 915, y: 240 },
+  // Madhu-Marga cluster, left
+  Kotlin: { x: 60, y: 305 },
+  "Jetpack Compose": { x: 90, y: 385 },
+  Room: { x: 330, y: 375 },
+  // Website Blocker
+  Tkinter: { x: 90, y: 480 },
+  // Banking, bottom left
+  MongoDB: { x: 55, y: 560 },
+  "Express.js": { x: 70, y: 665 },
+  "Node.js": { x: 380, y: 560 },
+  "React.js": { x: 375, y: 675 },
+  // ZenPro and Diavo shared cluster, bottom right
+  "Next.js": { x: 910, y: 350 },
+  TypeScript: { x: 935, y: 480 },
+  Supabase: { x: 720, y: 615 },
+  PostgreSQL: { x: 560, y: 655 },
+  Redis: { x: 880, y: 590 },
 };
 
 export function buildGraph(): { nodes: GraphNode[]; edges: GraphEdge[] } {

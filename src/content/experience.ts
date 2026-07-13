@@ -38,6 +38,8 @@ export const experienceRecords: ExperienceRecord[] = [
     id: "mindmatrix",
     role: "Android Development Intern",
     org: "MindMatrix",
+    place: "Bengaluru",
+    period: "February to June 2026",
     headline:
       "Built Madhu-Marga, a smart beekeeping management app that digitizes hive work and structures decision support.",
     demonstrates: [

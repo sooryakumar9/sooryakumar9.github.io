@@ -34,8 +34,10 @@ export default function Operator() {
                 <LeaderNote>
                   {profile.education.degree}
                   <span className="block text-pencil">
-                    {profile.education.school}, {profile.education.place} ·{" "}
-                    {profile.education.period}
+                    {profile.education.school}, {profile.education.place}
+                  </span>
+                  <span className="block text-pencil">
+                    {profile.education.period} · CGPA {profile.education.cgpa}
                   </span>
                 </LeaderNote>
                 <LeaderNote>

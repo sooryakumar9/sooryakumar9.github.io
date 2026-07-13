@@ -7,12 +7,14 @@ import HilsLoop from "@/components/diagrams/HilsLoop";
 import RagPipeline from "@/components/diagrams/RagPipeline";
 import SecureChannel from "@/components/diagrams/SecureChannel";
 import PolicyGate from "@/components/diagrams/PolicyGate";
+import AuthFlow from "@/components/diagrams/AuthFlow";
 
 const DIAGRAMS: Record<CaseStudy["diagram"], ComponentType> = {
   hils: HilsLoop,
   rag: RagPipeline,
   channel: SecureChannel,
   gate: PolicyGate,
+  banking: AuthFlow,
 };
 
 /**

@@ -78,33 +78,33 @@ export function DiavoSchematic() {
       viewBox="0 0 900 250"
       className="block w-full"
       role="img"
-      aria-label="Draft schematic: food data flows into a product core being built, toward everyday dietary decisions. Most strokes are still pencil."
+      aria-label="Schematic: a food data corpus flows into a live product core, toward everyday dietary decisions. The core and food data are built, the interface is still coming together."
     >
       {/* exists · problem framing */}
       <DrawPath d="M 60 40 H 840" className="stroke-inked" duration={1} />
       <text x="60" y="28" className="svg-label">PROBLEM FRAMING · SETTLED</text>
 
-      {/* explored ends */}
-      <DrawPath d="M 60 100 H 220 V 180 H 60 Z" className="stroke-pencil" delay={0.2} />
-      <text x="140" y="132" textAnchor="middle" className="svg-label-faint">FOOD +</text>
-      <text x="140" y="148" textAnchor="middle" className="svg-label-faint">NUTRITION DATA</text>
-      <text x="140" y="164" textAnchor="middle" className="svg-label-faint">structure · exploring</text>
+      {/* the food corpus, already real */}
+      <DrawPath d="M 60 100 H 220 V 180 H 60 Z" className="stroke-inked" delay={0.2} />
+      <text x="140" y="132" textAnchor="middle" className="svg-label">FOOD DATA</text>
+      <text x="140" y="148" textAnchor="middle" className="svg-label-faint">870 dishes</text>
+      <text x="140" y="164" textAnchor="middle" className="svg-label-faint">fuzzy search</text>
 
       <DrawPath d="M 680 100 H 840 V 180 H 680 Z" className="stroke-pencil" delay={0.4} />
       <text x="760" y="132" textAnchor="middle" className="svg-label-faint">EVERYDAY</text>
       <text x="760" y="148" textAnchor="middle" className="svg-label-faint">DECISIONS</text>
-      <text x="760" y="164" textAnchor="middle" className="svg-label-faint">interface · exploring</text>
+      <text x="760" y="164" textAnchor="middle" className="svg-label-faint">interface · building</text>
 
-      {/* being built · the core */}
-      <DrawPath d="M 360 90 H 540 V 190 H 360 Z" className="stroke-dashed" delay={0.3} />
+      {/* the product core, live */}
+      <DrawPath d="M 360 90 H 540 V 190 H 360 Z" className="stroke-inked" delay={0.3} />
       <text x="450" y="128" textAnchor="middle" className="svg-label">PRODUCT CORE</text>
-      <text x="450" y="146" textAnchor="middle" className="svg-label-faint">understanding food</text>
-      <text x="450" y="162" textAnchor="middle" className="svg-label-faint">in progress</text>
+      <text x="450" y="146" textAnchor="middle" className="svg-label-faint">auth · data · views</text>
+      <text x="450" y="162" textAnchor="middle" className="svg-label-faint">live on vercel</text>
 
-      <DrawPath d="M 220 140 H 360" className="stroke-pencil" delay={0.5} />
+      <DrawPath d="M 220 140 H 360" className="stroke-live" delay={0.5} />
       <DrawPath d="M 540 140 H 680" className="stroke-pencil" delay={0.6} />
 
-      <text x="60" y="232" className="svg-label-faint">STACK · TO BE PUBLISHED · details land here as the product firms up</text>
+      <text x="60" y="232" className="svg-label-faint">STACK · NEXT.JS · SUPABASE · DRIZZLE · POSTGRES · LIVE ON VERCEL</text>
     </svg>
   );
 }

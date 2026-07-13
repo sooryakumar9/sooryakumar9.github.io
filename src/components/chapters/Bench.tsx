@@ -160,7 +160,7 @@ function BenchSheet({ project, index }: { project: BenchProject; index: number }
               ))}
             </ul>
           </div>
-          {project.plannedTech.length > 0 && (
+          {(project.techNotes || project.plannedTech.length > 0) && (
             <details className="group max-w-xs">
               <summary
                 data-cursor="OPEN"
@@ -172,9 +172,15 @@ function BenchSheet({ project, index }: { project: BenchProject; index: number }
                 </span>
               </summary>
               <p className="annotation mt-3 normal-case tracking-normal text-pencil">
-                Planned ecosystem · {project.plannedTech.join(", ")}. Planned
-                means planned: dashed edges in the graph below, nothing claimed
-                as shipped.
+                {project.techNotes ? (
+                  <>Built with {project.techNotes}</>
+                ) : (
+                  <>
+                    Planned ecosystem · {project.plannedTech.join(", ")}. Planned
+                    means planned: dashed edges in the graph below, nothing
+                    claimed as shipped.
+                  </>
+                )}
               </p>
             </details>
           )}

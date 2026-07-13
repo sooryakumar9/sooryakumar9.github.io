@@ -91,19 +91,19 @@ export default function Graph() {
 
         <div className="mt-12 overflow-x-auto" onMouseLeave={() => setActive(null)}>
           <svg
-            viewBox="0 0 1000 620"
-            className="block min-w-[720px]"
+            viewBox="0 0 1000 760"
+            className="block min-w-[760px]"
             role="group"
             aria-label="Interactive graph of projects and the technologies they use"
           >
-            {/* the substrate · fundamentals */}
+            {/* the substrate · fundamentals, faint, two footer rows beneath it all */}
             {profile.fundamentals.map((f, i) => (
               <text
                 key={f}
-                x={70 + (i % 3) * 320}
-                y={330 + Math.floor(i / 3) * 255}
+                x={55 + (i % 3) * 330}
+                y={722 + Math.floor(i / 3) * 24}
                 className="svg-label-faint"
-                opacity={0.5}
+                opacity={0.4}
                 aria-hidden
               >
                 · {f.toUpperCase()}
