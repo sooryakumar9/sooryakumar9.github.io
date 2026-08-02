@@ -124,162 +124,182 @@ const qsecure = define<{ cols: number; rows: number }>({
 type Pt = { x: number; y: number };
 
 /**
- * A dense face landmark mesh resolving under a biometric scan.
+ * Why the second factor exists.
  *
- * The topology is generated rather than hand listed: a jaw contour, brow and
- * eye rings, a nose ridge and a mouth ring, then local triangulation by
- * nearest neighbours. That gives roughly seventy points and a few hundred
- * edges, which is what makes it read as a real capture mesh instead of a stick
- * figure.
+ * A transfer is attempted with the password alone: the field fills, both keys
+ * are checked, and because only one of them is satisfied the gate holds — the
+ * transfer bar drives partway across and is thrown back. Then the face
+ * resolves beside it, both keys go green, and the same transfer completes
+ * without resistance.
+ *
+ * It is the argument the project makes, animated: a stolen password is not
+ * enough. The refusal followed by the acceptance is also what makes it worth
+ * watching rather than a status light changing colour.
  */
-const banking = define<{ pts: Pt[]; edges: [number, number][]; order: number[] }>({
-  trail: 0.42,
+const banking = define<{ face: Pt[] }>({
+  trail: 0.45,
   init: (w, h) => {
-    const cx = w / 2;
-    const cy = h * 0.46;
-    const R = Math.min(w * 0.3, h * 0.33);
-    const pts: Pt[] = [];
-    const push = (x: number, y: number) => pts.push({ x: cx + x * R, y: cy + y * R });
-
-    const CONTOUR = 26;
-    for (let i = 0; i < CONTOUR; i++) {
-      const ang = (i / CONTOUR) * Math.PI * 2 - Math.PI / 2;
-      const ry = Math.sin(ang) > 0 ? 1.06 : 0.92;
-      push(Math.cos(ang) * 0.78, Math.sin(ang) * ry);
+    // A head silhouette in unit space. Random radii around a circle produce a
+    // spiky star rather than anything face shaped, so the outline is an
+    // explicit oval that narrows toward the chin.
+    const face: Pt[] = [];
+    const N = 44;
+    for (let i = 0; i < N; i++) {
+      const ang = (i / N) * Math.PI * 2 - Math.PI / 2;
+      const c = Math.cos(ang);
+      const sn = Math.sin(ang);
+      // taper the lower half so the jaw comes to a chin
+      const taper = sn > 0 ? 1 - 0.3 * Math.pow(sn, 2) : 1;
+      face.push({ x: c * 0.66 * taper, y: sn * (sn > 0 ? 0.95 : 0.86) });
     }
-    for (const s of [-1, 1]) {
-      for (let i = 0; i < 5; i++) {
-        const k = i / 4;
-        push(s * (0.2 + k * 0.34), -0.42 - Math.sin(k * Math.PI) * 0.07);
-      }
-    }
-    for (const s of [-1, 1]) {
-      for (let i = 0; i < 8; i++) {
-        const ang = (i / 8) * Math.PI * 2;
-        push(s * 0.36 + Math.cos(ang) * 0.15, -0.22 + Math.sin(ang) * 0.08);
-      }
-    }
-    for (let i = 0; i < 5; i++) push(0, -0.34 + (i / 4) * 0.44);
-    for (let i = -2; i <= 2; i++) push(i * 0.07, 0.14);
-    for (let i = 0; i < 10; i++) {
-      const ang = (i / 10) * Math.PI * 2;
-      push(Math.cos(ang) * 0.24, 0.38 + Math.sin(ang) * 0.1);
-    }
-    for (const s of [-1, 1]) {
-      push(s * 0.52, 0.02);
-      push(s * 0.46, 0.26);
-      push(s * 0.3, 0.12);
-    }
-
-    const edges: [number, number][] = [];
-    const seen = new Set<string>();
-    for (let i = 0; i < pts.length; i++) {
-      const near = pts
-        .map((p, j) => ({ j, d: Math.hypot(p.x - pts[i].x, p.y - pts[i].y) }))
-        .filter((o) => o.j !== i)
-        .sort((p, q) => p.d - q.d)
-        .slice(0, 4);
-      for (const o of near) {
-        const key = i < o.j ? `${i}-${o.j}` : `${o.j}-${i}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        edges.push([i, o.j]);
-      }
-    }
-
-    const order = pts.map((_, i) => i).sort((p, q) => pts[p].y - pts[q].y);
-    return { pts, edges, order };
+    void w;
+    void h;
+    return { face };
   },
-  draw: ({ ctx, w, h, t, intro }, { pts, edges, order }) => {
+  draw: ({ ctx, w, h, t, intro }, { face }) => {
     const a = ease(intro);
     const unit = Math.min(w, h);
-    const [stage, local] = phase(t, [3, 1.4, 1.6, 1]);
-    const scanning = stage === 0;
-    const locked = stage >= 1;
 
-    const top = h * 0.1;
-    const bottom = h * 0.82;
-    const scanY = lerp(top, bottom, scanning ? local : 1);
-    // the flare band scales with the box so it is not a 70px constant
-    const flare = unit * 0.22;
+    // refused attempt, then accepted attempt, then a beat before repeating
+    const [stage, local] = phase(t, [1.1, 1.3, 0.9, 1.1, 1.5, 1.1]);
+    // 0 fill password  1 gate holds, bar bounces  2 pause
+    // 3 face resolves  4 both green, transfer clears  5 rest
+    const refusing = stage <= 2;
+    const faceOn = stage >= 3;
+    const bothGreen = stage >= 4;
 
-    const resolved = scanning ? local : 1;
-    const live = new Set(order.slice(0, Math.floor(resolved * order.length)));
+    const keyW = w * 0.34;
+    const keyH = Math.max(10, unit * 0.13);
+    const keyY = h * 0.14;
+    const leftX = w * 0.08;
+    const rightX = w - w * 0.08 - keyW;
 
-    for (const [p, q] of edges) {
-      if (!live.has(p) || !live.has(q)) continue;
-      const midY = (pts[p].y + pts[q].y) / 2;
-      const heat = scanning ? clamp01(1 - Math.abs(scanY - midY) / flare) : 0;
-      const base = locked ? 0.55 : 0.34;
-      gradientLine(
-        ctx,
-        pts[p].x,
-        pts[p].y,
-        pts[q].x,
-        pts[q].y,
-        heat > 0.02 || locked ? ACCENT : INK,
-        (base + heat * 0.6) * a,
-        (base * 0.6 + heat * 0.4) * a,
-        unit * (heat > 0.4 ? 0.0042 : 0.0026),
-      );
-    }
-
-    for (const i of live) {
-      const p = pts[i];
-      const heat = scanning ? clamp01(1 - Math.abs(scanY - p.y) / (flare * 0.8)) : 0;
-      coreDot(
-        ctx,
-        p.x,
-        p.y,
-        unit * (0.005 + heat * 0.006),
-        heat > 0.02 || locked ? ACCENT : INK,
-        (0.6 + heat * 0.4) * a,
-      );
-    }
-
-    if (scanning) {
-      for (let k = 0; k < 3; k++) {
-        const y = scanY - k * unit * 0.05;
-        if (y < top) continue;
-        gradientLine(ctx, w * 0.08, y, w * 0.92, y, ACCENT, 0, (0.55 - k * 0.16) * a, 1);
-        gradientLine(ctx, w * 0.92, y, w * 0.08, y, ACCENT, 0, (0.55 - k * 0.16) * a, 1);
+    // ---- key one: the password, always satisfied ----
+    const pwFill = stage === 0 ? ease(local) : 1;
+    ctx.fillStyle = rgba(INK, 0.07 * a);
+    ctx.fillRect(leftX, keyY, keyW, keyH);
+    ctx.fillStyle = rgba(ACCENT, 0.55 * a);
+    ctx.fillRect(leftX, keyY, keyW * pwFill, keyH);
+    // password dots, so the field reads as a credential rather than a bar
+    {
+      const dots = 9;
+      const r = keyH * 0.16;
+      for (let i = 0; i < dots; i++) {
+        const dx = leftX + keyW * ((i + 0.5) / dots);
+        const shown = pwFill > (i + 0.4) / dots;
+        ctx.fillStyle = rgba(shown ? INK : INK, (shown ? 0.85 : 0.12) * a);
+        ctx.beginPath();
+        ctx.arc(dx, keyY + keyH / 2, r, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
 
-    const barY = h * 0.93;
-    ctx.strokeStyle = rgba(INK, 0.12 * a);
-    ctx.lineWidth = Math.max(1.5, unit * 0.006);
-    ctx.beginPath();
-    ctx.moveTo(w * 0.08, barY);
-    ctx.lineTo(w * 0.92, barY);
-    ctx.stroke();
-
-    if (stage >= 2) {
-      const fill = stage === 2 ? local : 1;
-      gradientLine(
-        ctx,
-        w * 0.08,
-        barY,
-        w * 0.08 + w * 0.84 * fill,
-        barY,
-        ACCENT,
-        0.9 * a,
-        0.6 * a,
-        Math.max(1.5, unit * 0.006),
-      );
+    // ---- key two: the face, only satisfied on the second attempt ----
+    const faceFill = bothGreen ? 1 : faceOn ? ease(local) : 0;
+    ctx.fillStyle = rgba(INK, 0.07 * a);
+    ctx.fillRect(rightX, keyY, keyW, keyH);
+    if (faceFill > 0) {
+      ctx.fillStyle = rgba(ACCENT, 0.55 * a);
+      ctx.fillRect(rightX, keyY, keyW * faceFill, keyH);
     }
 
-    if (roomForLabels(w, h)) {
-      const fs = labelPx(w, h);
-      ctx.font = `500 ${fs.toFixed(1)}px ui-monospace, monospace`;
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = rgba(scanning ? INK : ACCENT, 0.7 * a);
-      ctx.fillText(
-        scanning ? "SCANNING" : stage === 1 ? "FACE MATCHED" : "AUTHORISED",
-        w * 0.08,
-        h * 0.07,
-      );
+    // the face lattice sits under key two. Its outline is always drawn so the
+    // right half of the frame is never empty; only the fill resolves.
+    const fcx = rightX + keyW / 2;
+    const fcy = h * 0.55;
+    const fr = unit * 0.26;
+    {
+      const trace = (upto: number) => {
+        ctx.beginPath();
+        for (let i = 0; i < upto; i++) {
+          const pt = face[i];
+          const x = fcx + pt.x * fr;
+          const y = fcy + pt.y * fr;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        if (upto === face.length) ctx.closePath();
+      };
+
+      // the unresolved outline
+      trace(face.length);
+      ctx.strokeStyle = rgba(INK, 0.14 * a);
+      ctx.lineWidth = Math.max(1, unit * 0.005);
+      ctx.stroke();
+
+      if (faceFill > 0.01) {
+        trace(Math.max(2, Math.floor(faceFill * face.length)));
+        ctx.strokeStyle = rgba(ACCENT, 0.85 * a);
+        ctx.lineWidth = Math.max(1.4, unit * 0.009);
+        ctx.stroke();
+        if (bothGreen) {
+          trace(face.length);
+          ctx.fillStyle = rgba(ACCENT, 0.1 * a);
+          ctx.fill();
+        }
+      }
+
+      // features, so the silhouette reads as a face rather than an oval. They
+      // arrive with the second half of the scan.
+      const feat = clamp01((faceFill - 0.45) / 0.55);
+      if (feat > 0.01) {
+        ctx.fillStyle = rgba(ACCENT, 0.8 * a * feat);
+        const eyeR = fr * 0.07;
+        for (const sx of [-1, 1]) {
+          ctx.beginPath();
+          ctx.ellipse(fcx + sx * fr * 0.28, fcy - fr * 0.2, eyeR * 1.5, eyeR, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.strokeStyle = rgba(ACCENT, 0.65 * a * feat);
+        ctx.lineWidth = Math.max(1.2, unit * 0.007);
+        ctx.beginPath();
+        ctx.moveTo(fcx - fr * 0.2, fcy + fr * 0.36);
+        ctx.quadraticCurveTo(fcx, fcy + fr * 0.46, fcx + fr * 0.2, fcy + fr * 0.36);
+        ctx.stroke();
+      }
+    }
+
+    // ---- the transfer ----
+    const gateX = w * 0.08;
+    const gateW = w * 0.84;
+    const barH = Math.max(10, unit * 0.13);
+    const trackY = h * 0.87;
+    ctx.fillStyle = rgba(INK, 0.07 * a);
+    ctx.fillRect(gateX, trackY - barH / 2, gateW, barH);
+
+    let travel = 0;
+    let thrown = false;
+    if (stage === 1) {
+      // out and back: the transfer is refused
+      const k = local;
+      travel = k < 0.45 ? ease(k / 0.45) * 0.46 : 0.46 * (1 - ease((k - 0.45) / 0.55));
+      thrown = k >= 0.45;
+    } else if (stage === 4) {
+      travel = ease(local);
+    } else if (stage === 5) {
+      travel = 1;
+    }
+
+    if (travel > 0.001) {
+      const colour = thrown ? AMBER : ACCENT;
+      const g = ctx.createLinearGradient(gateX, 0, gateX + gateW * travel, 0);
+      g.addColorStop(0, rgba(colour, 0.35 * a));
+      g.addColorStop(1, rgba(colour, 0.95 * a));
+      ctx.fillStyle = g;
+      ctx.fillRect(gateX, trackY - barH / 2, gateW * travel, barH);
+    }
+
+    // the barrier: solid while the second key is missing, gone once it is not.
+    // It is kept inside the track height so it never clips at the canvas edge.
+    if (!bothGreen) {
+      const bars = 5;
+      const bw = Math.max(2, unit * 0.013);
+      const span = bw * 2.1 * bars;
+      const barrierX = gateX + gateW * 0.5 - span / 2;
+      for (let i = 0; i < bars; i++) {
+        ctx.fillStyle = rgba(refusing && thrown ? AMBER : INK, (thrown ? 0.9 : 0.32) * a);
+        ctx.fillRect(barrierX + i * bw * 2.1, trackY - barH * 0.8, bw, barH * 1.6);
+      }
     }
   },
 });
@@ -583,63 +603,87 @@ const zenpro = define<{ lanes: Lane[] }>({
 
 /* ----------------------------------------------------------------- diavo --- */
 
+const MACROS = [0.42, 0.3, 0.18, 0.1];
+
 /**
- * One dish opening into what it is actually made of. A node expands into an
- * orbiting ring of nutrient nodes sized by proportion, holds long enough to
- * read, collapses, and the next dish takes its place — against a faint field
- * of the wider corpus.
+ * A dish opening into what it is made of.
+ *
+ * A solid cell expands into a filled ring split by macro proportion, with the
+ * same split repeated as stacked bars beneath it so the numbers read two ways.
+ * It holds long enough to take in, closes, and the next dish takes its place.
+ *
+ * Filled arcs and blocks rather than the thin orbit lines this replaced: at a
+ * card size a hairline ring is barely visible, whereas a weighted ring still
+ * reads.
  */
-const diavo = define<{
-  corpus: { x: number; y: number; r: number }[];
-  dishes: number[][];
-}>({
-  trail: 0.5,
+const diavo = define<{ dishes: number[][]; corpus: { x: number; y: number; r: number }[] }>({
+  trail: 0.22,
   init: (w, h) => {
     const rand = mulberry32(870);
-    const corpus: { x: number; y: number; r: number }[] = [];
-    const count = scaled(w, h, 40, 150, 1400);
     const unit = Math.min(w, h);
-    for (let i = 0; i < count; i++) {
+    const corpus: { x: number; y: number; r: number }[] = [];
+    for (let i = 0; i < scaled(w, h, 30, 110, 2200); i++) {
       corpus.push({ x: rand() * w, y: rand() * h, r: unit * (0.003 + rand() * 0.004) });
     }
+    // four dishes, each a normalised macro split
     const dishes: number[][] = [];
-    for (let d = 0; d < 4; d++) dishes.push(Array.from({ length: 7 }, () => 0.25 + rand() * 0.75));
-    return { corpus, dishes };
+    for (let d = 0; d < 4; d++) {
+      const raw = MACROS.map((m) => m * (0.55 + rand() * 0.9));
+      const total = raw.reduce((s, x) => s + x, 0);
+      dishes.push(raw.map((x) => x / total));
+    }
+    return { dishes, corpus };
   },
-  draw: ({ ctx, w, h, t, intro }, { corpus, dishes }) => {
+  draw: ({ ctx, w, h, t, intro }, { dishes, corpus }) => {
     const a = ease(intro);
     const unit = Math.min(w, h);
-    const cycle = 4.5;
-    const which = Math.floor(t / cycle) % dishes.length;
-    const [stage, local] = phase(t % cycle, [1, 2.2, 1.3]);
+    const CYCLE = 4.6;
+    const which = Math.floor(t / CYCLE) % dishes.length;
+    const [stage, local] = phase(t % CYCLE, [0.9, 2.4, 1.3]);
     const open = stage === 0 ? ease(local) : stage === 1 ? 1 : 1 - ease(local);
+    const vals = dishes[which];
 
+    // the wider corpus, faint behind
     for (const c of corpus) {
-      const tw = 0.5 + 0.5 * Math.sin(t * 0.6 + c.x * 0.02);
-      ctx.fillStyle = rgba(INK, 0.09 * tw * a);
-      ctx.beginPath();
-      ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillStyle = rgba(INK, 0.07 * a);
+      ctx.fillRect(c.x, c.y, c.r * 2, c.r * 2);
     }
 
     const cx = w / 2;
-    const cy = h * 0.48;
-    const R = Math.min(w * 0.3, h * 0.32);
-    const vals = dishes[which];
+    const cy = h * 0.44;
+    const rOuter = unit * 0.3 * (0.35 + open * 0.65);
+    const rInner = rOuter * 0.52;
 
+    // the ring, split by proportion — filled wedges, not strokes
+    let angle = -Math.PI / 2;
     for (let i = 0; i < vals.length; i++) {
-      const ang = (i / vals.length) * Math.PI * 2 - Math.PI / 2 + t * 0.16;
-      const dist = R * open * (0.62 + vals[i] * 0.38);
-      const x = cx + Math.cos(ang) * dist;
-      const y = cy + Math.sin(ang) * dist * 0.86;
-      const size = unit * (0.008 + vals[i] * 0.016);
-
-      gradientLine(ctx, cx, cy, x, y, ACCENT, 0.05 * a * open, 0.4 * a * open, 1);
-      coreDot(ctx, x, y, size * open, i % 3 === 0 ? ACCENT_DEEP : ACCENT, 0.85 * a * open);
+      const sweep = vals[i] * Math.PI * 2 * open;
+      const shade = 1 - i / vals.length;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rOuter, angle, angle + sweep);
+      ctx.arc(cx, cy, rInner, angle + sweep, angle, true);
+      ctx.closePath();
+      ctx.fillStyle = rgba(i === 0 ? ACCENT : i === 1 ? ACCENT_DEEP : INK, (0.18 + shade * 0.55) * a);
+      ctx.fill();
+      angle += sweep;
     }
 
-    coreDot(ctx, cx, cy, unit * (0.024 + (1 - open) * 0.014), ACCENT, 0.95 * a);
-    glowDot(ctx, cx, cy, unit * 0.058, ACCENT, 0.3 * a);
+    // the same split again as stacked bars, which reads better on a wide box
+    const barY = h * 0.86;
+    const barH = Math.max(6, unit * 0.07);
+    const barW = w * 0.72 * open;
+    let x = cx - barW / 2;
+    for (let i = 0; i < vals.length; i++) {
+      const seg = barW * vals[i];
+      const shade = 1 - i / vals.length;
+      ctx.fillStyle = rgba(i === 0 ? ACCENT : i === 1 ? ACCENT_DEEP : INK, (0.18 + shade * 0.55) * a);
+      ctx.fillRect(x, barY - barH / 2, Math.max(0, seg - unit * 0.006), barH);
+      x += seg;
+    }
+
+    // the dish itself at the centre of the ring
+    coreDot(ctx, cx, cy, unit * 0.035 * (1 - open * 0.35), ACCENT, 0.9 * a);
+    glowDot(ctx, cx, cy, unit * 0.09, ACCENT, 0.25 * a);
   },
 });
 

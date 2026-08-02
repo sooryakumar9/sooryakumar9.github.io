@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import { gsap, prefersReducedMotion } from "@/lib/gsapSetup";
-import Signature from "@/components/signature/Signature";
+import HeroField from "@/components/signature/HeroField";
 import { heroRoles, profile } from "@/content/profile";
 
 /**
@@ -183,7 +183,7 @@ export default function Hero() {
       className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 text-center"
     >
       <div aria-hidden className="absolute inset-0 z-0">
-        <Signature variant="hero" interactive />
+        <HeroField />
       </div>
       <div aria-hidden className="smoke smoke-a z-0" />
 

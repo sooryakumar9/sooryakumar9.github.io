@@ -1,292 +1,170 @@
-import {
-  ACCENT,
-  ACCENT_DEEP,
-  INK,
-  clamp01,
-  coreDot,
-  ease,
-  glowDot,
-  lerp,
-  mulberry32,
-  noise2D,
-  rgba,
-} from "../types";
+import { ACCENT, ACCENT_DEEP, INK, clamp01, ease, mulberry32, rgba } from "../types";
 import { define } from "./shared";
 
 /* ------------------------------------------------------------------ hero --- */
 
 /**
- * Topographic contours over an evolving terrain.
+ * The 2D fallback for the hero, used only when WebGL is unavailable.
  *
- * The height field is noise that drifts on a third axis, so the landscape is
- * always slowly rearranging itself rather than looping. Contour lines are
- * extracted with marching squares at a set of evenly spaced elevations, which
- * is why the bands stay clean and parallel instead of turning into hatching.
- *
- * The cursor adds a smooth gaussian peak to the field, so pointing at the page
- * pushes a hill up under it and the rings visibly bunch and ripple outward.
- * Bands near that peak warm toward cyan; everything else stays near neutral.
+ * Soft overlapping radial masses rather than strokes, so it degrades into
+ * something in the same family as the shader instead of dropping back to line
+ * art. Cheap by construction: a handful of gradients per frame.
  */
-type HeroState = {
-  cols: number;
-  rows: number;
-  cell: number;
-  /** reused every frame so the field never allocates */
-  field: Float32Array;
-  levels: number[];
-};
-
-const hero = define<HeroState>({
-  // no trail: contours are hard geometry and a wake just muddies them
+const hero = define<{ blobs: { x: number; y: number; r: number; sx: number; sy: number }[] }>({
   init: (w, h) => {
-    // cell size scales with the canvas so the contour density looks the same
-    // on a phone and on a 27 inch monitor
-    const cell = Math.max(14, Math.min(w, h) / 26);
-    const cols = Math.ceil(w / cell) + 2;
-    const rows = Math.ceil(h / cell) + 2;
-    return {
-      cols,
-      rows,
-      cell,
-      field: new Float32Array(cols * rows),
-      levels: [-0.5, -0.3, -0.12, 0.04, 0.2, 0.36, 0.52, 0.68],
-    };
+    const rand = mulberry32(4181);
+    const blobs = [];
+    for (let i = 0; i < 6; i++) {
+      blobs.push({
+        x: rand(),
+        y: rand(),
+        r: 0.35 + rand() * 0.4,
+        sx: (rand() - 0.5) * 0.9,
+        sy: (rand() - 0.5) * 0.9,
+      });
+    }
+    void w;
+    void h;
+    return { blobs };
   },
-  draw: ({ ctx, w, h, t, px, py, intro }, s) => {
+  draw: ({ ctx, w, h, t, intro }, { blobs }) => {
     const a = ease(intro);
-    const { cols, rows, cell, field, levels } = s;
-
-    // the peak the pointer raises, eased so it grows and relaxes smoothly
-    const peakR = Math.min(w, h) * 0.42;
-
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const x = c * cell;
-        const y = r * cell;
-        // two octaves is enough for readable contours; more just adds noise
-        let v =
-          noise2D(x * 0.0026 + t * 0.045, y * 0.0026 - t * 0.03) * 0.7 +
-          noise2D(x * 0.0061 - t * 0.02, y * 0.0061 + t * 0.026) * 0.3;
-
-        if (px !== null && py !== null) {
-          const dx = x - px;
-          const dy = y - py;
-          const d2 = (dx * dx + dy * dy) / (peakR * peakR);
-          if (d2 < 4) v += Math.exp(-d2 * 1.6) * 0.85;
-        }
-        field[r * cols + c] = v;
-      }
-    }
-
-    ctx.lineCap = "round";
-
-    for (let li = 0; li < levels.length; li++) {
-      const level = levels[li];
-      // higher bands read brighter, which gives the terrain a light direction
-      const band = li / (levels.length - 1);
-      ctx.lineWidth = 0.7 + band * 0.9;
-      ctx.beginPath();
-
-      for (let r = 0; r < rows - 1; r++) {
-        for (let c = 0; c < cols - 1; c++) {
-          const i = r * cols + c;
-          const tl = field[i];
-          const tr = field[i + 1];
-          const bl = field[i + cols];
-          const br = field[i + cols + 1];
-
-          // marching squares: one bit per corner above the level
-          const idx =
-            (tl > level ? 8 : 0) | (tr > level ? 4 : 0) | (br > level ? 2 : 0) | (bl > level ? 1 : 0);
-          if (idx === 0 || idx === 15) continue;
-
-          const x0 = c * cell;
-          const y0 = r * cell;
-          const x1 = x0 + cell;
-          const y1 = y0 + cell;
-
-          // linear interpolation along each crossed edge, which is what keeps
-          // the lines smooth instead of stair stepped
-          const top = () => [x0 + ((level - tl) / (tr - tl)) * cell, y0] as const;
-          const right = () => [x1, y0 + ((level - tr) / (br - tr)) * cell] as const;
-          const bottom = () => [x0 + ((level - bl) / (br - bl)) * cell, y1] as const;
-          const left = () => [x0, y0 + ((level - tl) / (bl - tl)) * cell] as const;
-
-          const seg = (p: readonly [number, number], q: readonly [number, number]) => {
-            ctx.moveTo(p[0], p[1]);
-            ctx.lineTo(q[0], q[1]);
-          };
-
-          switch (idx) {
-            case 1:
-            case 14:
-              seg(left(), bottom());
-              break;
-            case 2:
-            case 13:
-              seg(bottom(), right());
-              break;
-            case 3:
-            case 12:
-              seg(left(), right());
-              break;
-            case 4:
-            case 11:
-              seg(top(), right());
-              break;
-            case 6:
-            case 9:
-              seg(top(), bottom());
-              break;
-            case 7:
-            case 8:
-              seg(left(), top());
-              break;
-            // saddles: draw both crossings rather than guessing a connection
-            case 5:
-              seg(left(), top());
-              seg(bottom(), right());
-              break;
-            case 10:
-              seg(top(), right());
-              seg(left(), bottom());
-              break;
-          }
-        }
-      }
-
-      ctx.strokeStyle = rgba(INK, (0.06 + band * 0.16) * a);
-      ctx.stroke();
-    }
-
-    // the pointer's own peak gets a warm halo so the interaction is legible
-    if (px !== null && py !== null) {
-      const g = ctx.createRadialGradient(px, py, 0, px, py, peakR * 0.9);
-      g.addColorStop(0, rgba(ACCENT, 0.1 * a));
-      g.addColorStop(0.5, rgba(ACCENT, 0.03 * a));
-      g.addColorStop(1, rgba(ACCENT, 0));
+    const unit = Math.max(w, h);
+    for (let i = 0; i < blobs.length; i++) {
+      const b = blobs[i];
+      const x = (b.x + Math.sin(t * 0.06 * b.sx + i) * 0.12) * w;
+      const y = (b.y + Math.cos(t * 0.06 * b.sy + i * 1.7) * 0.12) * h;
+      const r = b.r * unit * 0.6;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      const tint = i % 3 === 0 ? ACCENT : INK;
+      g.addColorStop(0, rgba(tint, 0.05 * a));
+      g.addColorStop(1, rgba(tint, 0));
       ctx.fillStyle = g;
-      ctx.fillRect(px - peakR, py - peakR, peakR * 2, peakR * 2);
+      ctx.fillRect(x - r, y - r, r * 2, r * 2);
     }
   },
 });
 
 /* ------------------------------------------------------------------ hils --- */
 
+const STEPS = 5;
+
 /**
- * A Lorenz attractor, integrated live.
+ * What the DRDO work actually replaced, shown as a race.
  *
- * The trajectory is advanced a few steps per frame with RK-ish Euler and kept
- * in a ring buffer, then drawn as a ribbon that is bright at the head and
- * decays along the tail. The whole thing rotates slowly on the vertical axis
- * so the two lobes trade depth, with far segments fogged toward the
- * background.
+ * The upper track is the lab run as it was done by hand: step, wait, step,
+ * wait — long uneven pauses while an engineer walks the model through load,
+ * build, execute, stop and reset. The lower track is the same five steps
+ * driven by the web layer, firing in one continuous sweep.
  *
- * It never repeats and never resets: a deterministic system that is impossible
- * to predict, which is the honest picture of what a simulation lab does.
+ * Both start together, so the gap between the two bars when the automated run
+ * has finished *is* the roughly 70 percent that disappeared. Nothing is
+ * labelled; the difference in length says it.
  */
-type LorenzState = {
-  buf: Float32Array;
-  head: number;
-  len: number;
-  cap: number;
-  x: number;
-  y: number;
-  z: number;
-};
-
-const hils = define<LorenzState>({
-  trail: 0.62,
-  init: (w, h) => {
-    // longer ribbon on a bigger canvas, but never so long it costs a frame
-    const cap = Math.round(clamp01((w * h) / 500000) * 900) + 500;
-    return { buf: new Float32Array(cap * 3), head: 0, len: 0, cap, x: 0.1, y: 0, z: 0 };
+const hils = define<{ waits: number[] }>({
+  trail: 0.5,
+  init: () => {
+    const rand = mulberry32(70);
+    // uneven human pauses, which is what makes the top track read as manual
+    return { waits: Array.from({ length: STEPS }, () => 0.6 + rand() * 0.9) };
   },
-  draw: ({ ctx, w, h, t, px, py, intro }, s) => {
+  draw: ({ ctx, w, h, t, intro }, { waits }) => {
     const a = ease(intro);
-    const SIGMA = 10;
-    const RHO = 28;
-    const BETA = 8 / 3;
-    const dt = 0.0055;
+    const unit = Math.min(w, h);
 
-    // integrate several steps per frame so the head moves at a watchable pace
-    for (let i = 0; i < 7; i++) {
-      const dx = SIGMA * (s.y - s.x);
-      const dy = s.x * (RHO - s.z) - s.y;
-      const dz = s.x * s.y - BETA * s.z;
-      s.x += dx * dt;
-      s.y += dy * dt;
-      s.z += dz * dt;
+    const CYCLE = 9;
+    const local = (t % CYCLE) / CYCLE;
 
-      s.buf[s.head * 3] = s.x;
-      s.buf[s.head * 3 + 1] = s.y;
-      s.buf[s.head * 3 + 2] = s.z;
-      s.head = (s.head + 1) % s.cap;
-      if (s.len < s.cap) s.len++;
-    }
+    const padX = w * 0.08;
+    const trackW = w - padX * 2;
+    const barH = Math.max(6, unit * 0.075);
+    const yTop = h * 0.34;
+    const yBot = h * 0.64;
 
-    // Fit to the box. The attractor spans roughly 44 world units across and 50
-    // tall, and the perspective term shrinks it a further ~15%, so fitting
-    // naively against those raw extents leaves it marooned in the middle of a
-    // wide banner. These divisors target ~90% of the short side.
-    const scale = Math.min(w / 40, h / 47);
-    const cx = w / 2;
-    const cy = h / 2;
+    // the automated run occupies the first 28% of the cycle, the manual run
+    // nearly all of it — that ratio is the saving
+    const autoP = clamp01(local / 0.28);
+    const totalWait = waits.reduce((s, x) => s + x, 0);
+    const manualP = clamp01(local / 0.92);
 
-    // slow yaw, nudged by the pointer so it feels responsive without spinning
-    let yaw = t * 0.16;
-    if (px !== null) yaw += ((px - w / 2) / w) * 0.9;
-    const cosY = Math.cos(yaw);
-    const sinY = Math.sin(yaw);
-    const tilt = px !== null && py !== null ? ((py - h / 2) / h) * 0.35 : 0;
+    const drawTrack = (y: number, progress: number, hot: boolean, working = -1) => {
+      ctx.fillStyle = rgba(INK, 0.06 * a);
+      ctx.fillRect(padX, y - barH / 2, trackW, barH);
 
-    ctx.lineCap = "round";
-
-    let prevX = 0;
-    let prevY = 0;
-    let prevOk = false;
-
-    for (let k = 0; k < s.len; k++) {
-      // walk from oldest to newest so the ribbon draws head-last
-      const i = (s.head - s.len + k + s.cap * 2) % s.cap;
-      const X = s.buf[i * 3];
-      const Y = s.buf[i * 3 + 1];
-      const Z = s.buf[i * 3 + 2] - 25;
-
-      // rotate about the vertical axis, then a small tilt
-      const rx = X * cosY - Y * sinY;
-      const rz = X * sinY + Y * cosY;
-      const ry = Z + rz * tilt;
-
-      // weak perspective: nearer segments are larger and brighter
-      const depth = 1 / (1 + (rz + 30) * 0.006);
-      const sx = cx + rx * scale * depth;
-      const sy = cy - ry * scale * depth;
-
-      const age = k / s.len; // 0 tail, 1 head
-      if (prevOk) {
-        const fog = clamp01(depth * 1.1);
-        // the head is cyan and hot, the tail cools to near neutral
-        const warmth = age * age;
-        ctx.strokeStyle = rgba(
-          warmth > 0.45 ? ACCENT : INK,
-          (0.04 + age * 0.62) * fog * a,
-        );
-        ctx.lineWidth = (0.5 + age * 1.9) * fog;
-        ctx.beginPath();
-        ctx.moveTo(prevX, prevY);
-        ctx.lineTo(sx, sy);
-        ctx.stroke();
+      const filled = trackW * progress;
+      if (filled > 0.5) {
+        const g = ctx.createLinearGradient(padX, 0, padX + filled, 0);
+        g.addColorStop(0, rgba(hot ? ACCENT : INK, (hot ? 0.5 : 0.22) * a));
+        g.addColorStop(1, rgba(hot ? ACCENT : INK, (hot ? 0.95 : 0.4) * a));
+        ctx.fillStyle = g;
+        ctx.fillRect(padX, y - barH / 2, filled, barH);
       }
-      prevX = sx;
-      prevY = sy;
-      prevOk = true;
+
+      // the segment currently being worked, so a waiting manual run reads as
+      // occupied rather than broken
+      if (working >= 0) {
+        const segW = trackW / STEPS;
+        const pulse = 0.5 + 0.5 * Math.sin(t * 4);
+        ctx.fillStyle = rgba(INK, (0.05 + pulse * 0.1) * a);
+        ctx.fillRect(padX + segW * working, y - barH / 2, segW, barH);
+      }
+
+      for (let i = 0; i <= STEPS; i++) {
+        const x = padX + (trackW * i) / STEPS;
+        const passed = progress >= i / STEPS - 0.001;
+        ctx.fillStyle = rgba(passed ? (hot ? ACCENT : INK) : INK, (passed ? 0.9 : 0.16) * a);
+        const mw = Math.max(1.5, unit * 0.012);
+        ctx.fillRect(x - mw / 2, y - barH * 0.95, mw, barH * 1.9);
+      }
+
+      if (progress > 0 && progress < 1) {
+        const x = padX + filled;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, barH * 2.2);
+        g.addColorStop(0, rgba(hot ? ACCENT : INK, 0.55 * a));
+        g.addColorStop(1, rgba(hot ? ACCENT : INK, 0));
+        ctx.fillStyle = g;
+        ctx.fillRect(x - barH * 2.2, y - barH * 2.2, barH * 4.4, barH * 4.4);
+      }
+    };
+
+    // manual: advance only while a step is being performed, hold otherwise
+    let manualProgress = 0;
+    let manualWorking = -1;
+    {
+      const walked = manualP * totalWait;
+      let acc = 0;
+      for (let i = 0; i < STEPS; i++) {
+        const seg = waits[i];
+        if (walked >= acc + seg) {
+          manualProgress = (i + 1) / STEPS;
+          acc += seg;
+          continue;
+        }
+        // most of each segment is spent waiting, then the step happens
+        const within = (walked - acc) / seg;
+        manualProgress = (i + clamp01((within - 0.62) / 0.38)) / STEPS;
+        manualWorking = i;
+        break;
+      }
     }
 
-    // the leading particle
-    if (prevOk) {
-      coreDot(ctx, prevX, prevY, Math.max(1.8, Math.min(w, h) * 0.008), ACCENT, a);
-      glowDot(ctx, prevX, prevY, Math.max(5, Math.min(w, h) * 0.026), ACCENT_DEEP, 0.4 * a);
+    drawTrack(yTop, manualProgress, false, manualWorking);
+    drawTrack(yBot, ease(autoP), true);
+
+    // once the automated run is done, the distance still left on the manual
+    // track is the time that was saved
+    if (autoP >= 1 && manualProgress < 1) {
+      const x1 = padX + trackW * 1;
+      const x2 = padX + trackW * manualProgress;
+      const midY = (yTop + yBot) / 2;
+      ctx.strokeStyle = rgba(ACCENT_DEEP, 0.5 * a);
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      ctx.moveTo(x2, midY);
+      ctx.lineTo(x1, midY);
+      ctx.stroke();
+      ctx.setLineDash([]);
     }
   },
 });
@@ -294,121 +172,78 @@ const hils = define<LorenzState>({
 /* ------------------------------------------------------------------- rag --- */
 
 /**
- * Relevance as distance.
+ * The ranking rearranging itself.
  *
- * One document node sits at the centre and job nodes orbit it at a radius set
- * by their match score — closer means a better match. Scores drift on their
- * own slow cycles, so nodes continuously spiral in and out and the ranking
- * genuinely reorders itself. Whichever is currently nearest locks: it brightens,
- * gains a tether to the centre and holds until something overtakes it.
+ * A dense grid where every row is one opening and every cell along it is one
+ * dimension of similarity against the résumé. Scores drift, so the rows
+ * continuously re-sort into rank order — the strongest match rises to the top
+ * and holds until something displaces it.
+ *
+ * A wall of data rather than a few floating points, which is both closer to
+ * what a retrieval pipeline produces and legible at any size.
  */
-type Job = { seed: number; speed: number; base: number; swing: number; phase: number };
+type Row = { seed: number; speed: number; y: number };
 
-const rag = define<{ jobs: Job[] }>({
-  trail: 0.5,
+const rag = define<{ rows: Row[]; cols: number }>({
+  // no trail: the rows slide between rank slots, and a wake turns that into
+  // smeared ghosts rather than movement
+  trail: 0,
   init: (w, h) => {
-    const rand = mulberry32(2026);
-    // more orbiters on a larger canvas, but never a crowd
-    const count = Math.round(lerp(6, 11, clamp01((w * h) / 420000)));
-    const jobs: Job[] = [];
-    for (let i = 0; i < count; i++) {
-      jobs.push({
-        seed: rand(),
-        speed: 0.06 + rand() * 0.13,
-        base: 0.34 + rand() * 0.46,
-        swing: 0.1 + rand() * 0.2,
-        // evenly spaced starting angles with a little jitter, so the orbiters
-        // never all happen to bunch into one quadrant
-        phase: (i / count) * Math.PI * 2 + rand() * 0.5,
-      });
+    const rand = mulberry32(917);
+    const rowCount = Math.max(5, Math.min(11, Math.round(h / Math.max(16, h * 0.105))));
+    const rows: Row[] = [];
+    for (let i = 0; i < rowCount; i++) {
+      rows.push({ seed: rand() * 10, speed: 0.1 + rand() * 0.18, y: i });
     }
-    return { jobs };
+    const cols = Math.max(8, Math.min(26, Math.round(w / Math.max(18, w * 0.045))));
+    return { rows, cols };
   },
-  draw: ({ ctx, w, h, t, px, py, intro }, { jobs }) => {
+  draw: ({ ctx, w, h, t, intro }, { rows, cols }) => {
     const a = ease(intro);
-    const cx = w / 2;
-    const cy = h / 2;
-    const unit = Math.min(w, h);
-    // The orbits are elliptical and follow the canvas aspect, so a 1240x420
-    // banner gets a wide ellipse rather than a small circle stranded in the
-    // middle. The stretch is capped so it never degenerates into a line.
-    const ry = h * 0.4;
-    const rx = Math.min(w * 0.4, ry * 2.6);
+    const padX = w * 0.07;
+    const padY = h * 0.1;
+    const gridW = w - padX * 2;
+    const gridH = h - padY * 2;
+    const rowH = gridH / rows.length;
+    const cellW = gridW / cols;
+    const gap = Math.max(1, cellW * 0.14);
 
-    // guide rings, so the radii read as a scale rather than as scatter
-    for (let i = 1; i <= 3; i++) {
-      ctx.strokeStyle = rgba(INK, 0.035 * a);
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, rx * (i / 3), ry * (i / 3), 0, 0, Math.PI * 2);
-      ctx.stroke();
-    }
+    const scored = rows.map((r, i) => ({
+      i,
+      r,
+      score: 0.5 + 0.5 * Math.sin(t * r.speed + r.seed),
+    }));
+    const order = [...scored].sort((p, q) => q.score - p.score);
 
-    // resolve every orbiter first so the closest can be found before drawing
-    let best = -1;
-    let bestR = Infinity;
-    const pos: { x: number; y: number; r: number; score: number }[] = [];
+    // ease each row toward its rank slot, so re-sorting is a slide not a jump
+    order.forEach((entry, rank) => {
+      entry.r.y += (rank - entry.r.y) * 0.05;
+    });
 
-    for (let i = 0; i < jobs.length; i++) {
-      const j = jobs[i];
-      // the score breathes, which is what makes the ranking move
-      const score = 0.5 + 0.5 * Math.sin(t * 0.32 + j.phase);
-      const rNorm = j.base - j.swing * score;
-      const ang = j.phase + t * j.speed;
-      const x = cx + Math.cos(ang) * rx * rNorm;
-      const y = cy + Math.sin(ang) * ry * rNorm;
-      // rank on the normalised radius, not the pixel one, so the leader is the
-      // best match rather than whichever node the ellipse happens to squash
-      pos.push({ x, y, r: rNorm, score });
-      if (rNorm < bestR) {
-        bestR = rNorm;
-        best = i;
+    const leader = order[0].i;
+
+    for (const entry of scored) {
+      const y = padY + entry.r.y * rowH;
+      const isTop = leader === entry.i;
+
+      for (let c = 0; c < cols; c++) {
+        // stable per cell offset, so a strong row is bright across its width
+        const hash = Math.sin(entry.i * 41.3 + c * 12.9) * 43758.5453;
+        const frac = hash - Math.floor(hash);
+        const v = clamp01(entry.score * (0.55 + frac * 0.75) - 0.08);
+
+        ctx.fillStyle = rgba(
+          isTop ? ACCENT : v > 0.66 ? ACCENT_DEEP : INK,
+          (0.05 + v * (isTop ? 0.85 : 0.5)) * a,
+        );
+        ctx.fillRect(padX + c * cellW, y, cellW - gap, rowH - gap);
+      }
+
+      if (isTop) {
+        ctx.fillStyle = rgba(ACCENT, 0.95 * a);
+        ctx.fillRect(padX - Math.max(4, w * 0.014), y, Math.max(2, w * 0.006), rowH - gap);
       }
     }
-
-    for (let i = 0; i < pos.length; i++) {
-      const p = pos[i];
-      const near = clamp01(1 - p.r);
-      const isBest = i === best;
-
-      // tether: only the leader keeps a solid line to the centre
-      ctx.strokeStyle = rgba(isBest ? ACCENT : INK, (isBest ? 0.5 : 0.06 + near * 0.1) * a);
-      ctx.lineWidth = isBest ? 1.4 : 0.8;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(p.x, p.y);
-      ctx.stroke();
-
-      const size = unit * (isBest ? 0.014 : 0.007 + near * 0.006);
-      coreDot(ctx, p.x, p.y, size, isBest ? ACCENT : INK, (isBest ? 1 : 0.32 + near * 0.4) * a);
-      if (isBest) {
-        glowDot(ctx, p.x, p.y, size * 3.4, ACCENT, 0.4 * a);
-        // a lock bracket, sized to the canvas
-        const b = size * 2.6;
-        ctx.strokeStyle = rgba(ACCENT, 0.75 * a);
-        ctx.lineWidth = 1.2;
-        for (const [sx, sy] of [
-          [-1, -1],
-          [1, -1],
-          [-1, 1],
-          [1, 1],
-        ] as const) {
-          ctx.beginPath();
-          ctx.moveTo(p.x + sx * b, p.y + sy * b - sy * b * 0.45);
-          ctx.lineTo(p.x + sx * b, p.y + sy * b);
-          ctx.lineTo(p.x + sx * b - sx * b * 0.45, p.y + sy * b);
-          ctx.stroke();
-        }
-      }
-    }
-
-    // the document itself, with a slow pulse
-    const pulse = 0.85 + 0.15 * Math.sin(t * 1.6);
-    coreDot(ctx, cx, cy, unit * 0.018 * pulse, ACCENT_DEEP, a);
-    glowDot(ctx, cx, cy, unit * 0.07, ACCENT_DEEP, 0.35 * a);
-
-    void px;
-    void py;
   },
 });
 

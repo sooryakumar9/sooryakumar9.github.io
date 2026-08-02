@@ -4,7 +4,7 @@ import Reveal from "@/components/motion/Reveal";
 import Journey from "@/components/sections/Journey";
 import RotatingSubtitle from "@/components/sections/RotatingSubtitle";
 import Collaborate from "@/components/chrome/Collaborate";
-import Signature from "@/components/signature/Signature";
+import HeroField from "@/components/signature/HeroField";
 import { process } from "@/content/journey";
 import { profile } from "@/content/profile";
 
@@ -19,7 +19,7 @@ export default function AboutPage() {
     <>
       <section className="relative overflow-hidden pt-32 pb-16 md:pt-44">
         <div aria-hidden className="absolute inset-0 z-0 opacity-40">
-          <Signature variant="hero" />
+          <HeroField interactive={false} />
         </div>
         <div aria-hidden className="smoke smoke-b z-0" />
 

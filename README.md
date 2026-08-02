@@ -57,7 +57,7 @@ src/components/
 src/lib/          GSAP setup, media-query hooks
 ```
 
-### Three things worth knowing before editing
+### Four things worth knowing before editing
 
 **Fonts live on `<html>`, not `<body>`.** Tailwind declares `--font-display` on `:root`,
 and a custom property is substituted where it is *declared*. If `--font-bricolage` were
@@ -67,6 +67,12 @@ collapse to the browser default.
 **Decorative layers never use a negative `z-index`.** Negative z-index paints beneath the
 body's background box, which would hide them completely. `<body>` deliberately has no
 background — `html` paints the page — and layers stack with explicit `z-0` / `z-10`.
+
+**The hero is WebGL, the project canvases are 2D.** A fragment shader evaluates a field at
+every pixel, so it renders volume — soft masses with interiors. Stamping strokes onto a 2D
+canvas can only ever produce line art, however carefully it is tuned; that is the whole
+reason `HeroField` exists separately from `Signature`. It renders at ~0.55 resolution scale
+and is upscaled by CSS, and it falls back to the 2D `hero` program if WebGL is unavailable.
 
 **Generated image routes need a post-build step.** Under `output: "export"`,
 `opengraph-image.tsx` and `apple-icon.tsx` emit *extensionless* files. A static host serves
@@ -88,4 +94,8 @@ which left project-page banners frozen until the visitor moved; the engine still
 anything outside the viewport, which is what keeps ten of them affordable.
 
 Measured on the home page while scrolling: median 16.7ms (60fps) unthrottled, and median
-26ms / p95 40ms at 6x CPU throttle, which approximates a mid-range phone.
+25ms / p95 41ms at 6x CPU throttle, which approximates a mid-range phone.
+
+Headless Chromium logs `GPU stall due to ReadPixels` warnings on pages carrying the WebGL
+hero. That is a headless compositing artifact — a real browser logs none, and frame timing
+is unaffected.
