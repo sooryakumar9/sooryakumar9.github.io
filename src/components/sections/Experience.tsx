@@ -42,7 +42,7 @@ export default function Experience() {
 
                   {project && (
                     <div className="border-line mt-8 hidden aspect-[16/10] overflow-hidden rounded-panel border md:block">
-                      <Signature variant={project.signature} scrollDriven />
+                      <Signature variant={project.signature} />
                     </div>
                   )}
                 </div>

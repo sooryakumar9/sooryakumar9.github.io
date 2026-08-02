@@ -43,6 +43,8 @@ node scripts/shots.mjs --reduced --out shots-reduced
 `scripts/shots.mjs` walks every route at 1440 / 768 / 390 and fails if it finds a console
 error, a failed request or horizontal overflow.
 
+`scripts/fix-image-routes.mjs` runs automatically after `next build` — see below.
+
 ## Structure
 
 ```
@@ -55,7 +57,7 @@ src/components/
 src/lib/          GSAP setup, media-query hooks
 ```
 
-### Two things worth knowing before editing
+### Three things worth knowing before editing
 
 **Fonts live on `<html>`, not `<body>`.** Tailwind declares `--font-display` on `:root`,
 and a custom property is substituted where it is *declared*. If `--font-bricolage` were
@@ -66,6 +68,11 @@ collapse to the browser default.
 body's background box, which would hide them completely. `<body>` deliberately has no
 background — `html` paints the page — and layers stack with explicit `z-0` / `z-10`.
 
+**Generated image routes need a post-build step.** Under `output: "export"`,
+`opengraph-image.tsx` and `apple-icon.tsx` emit *extensionless* files. A static host serves
+by extension, so those go out as `application/octet-stream` and every social scraper refuses
+them. `scripts/fix-image-routes.mjs` writes `.png` twins and repoints the exported HTML.
+
 ## Motion and accessibility
 
 Everything scripted respects `prefers-reduced-motion`: the opening panel is skipped, the
@@ -75,3 +82,10 @@ scroller, and neither Lenis nor the cursor follower mounts at all.
 
 Canvases are decorative and `aria-hidden`; every fact one of them gestures at also exists
 as text. The featured rail and the filter grid are both operable from the keyboard.
+
+Every canvas runs on its own clock. An earlier version drove some from scroll position,
+which left project-page banners frozen until the visitor moved; the engine still pauses
+anything outside the viewport, which is what keeps ten of them affordable.
+
+Measured on the home page while scrolling: median 16.7ms (60fps) unthrottled, and median
+26ms / p95 40ms at 6x CPU throttle, which approximates a mid-range phone.

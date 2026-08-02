@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 6300",
-    "build": "next build",
+    "build": "next build && node scripts/fix-image-routes.mjs",
     "start": "next start -p 6300",
     "lint": "eslint"
   },

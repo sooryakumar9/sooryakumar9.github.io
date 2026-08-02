@@ -19,11 +19,3 @@ export function phase(t: number, durations: readonly number[]): [number, number]
   }
   return [durations.length - 1, 1];
 }
-
-/**
- * A program's clock. Scroll drives it when the canvas is scroll-linked, the
- * wall clock when it is not, so every program can be written one way.
- */
-export function clockOf(t: number, progress: number | null, span: number, rate: number): number {
-  return progress !== null ? progress * span : t * rate;
-}

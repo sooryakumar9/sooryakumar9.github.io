@@ -4,29 +4,28 @@ import { useEffect, useRef } from "react";
 import { attach } from "./engine";
 import { programs } from "./programs";
 import type { SignatureVariant } from "@/content/types";
-import { gsap, ScrollTrigger, prefersReducedMotion, hasFinePointer } from "@/lib/gsapSetup";
+import { prefersReducedMotion, hasFinePointer } from "@/lib/gsapSetup";
 
 /**
  * Decorative generative visual for a project or the hero. Purely
  * presentational: every fact a canvas gestures at also exists as text nearby,
  * so screen readers lose nothing by skipping it.
+ *
+ * Every program runs on its own clock. An earlier version drove some of them
+ * from scroll position, which meant that landing on a project page and not
+ * moving left the banner frozen — a canvas whose motion depends on the visitor
+ * scrolling is a canvas that is stopped most of the time. The engine still
+ * pauses anything outside the viewport, which is what keeps ten of them cheap.
  */
 export default function Signature({
   variant,
   className = "",
   /** track the cursor and let the program react to it */
   interactive = true,
-  /**
-   * Drive the program from scroll position rather than the clock. The canvas's
-   * own travel through the viewport becomes the timeline, so scrolling past a
-   * card steps its animation through its phases.
-   */
-  scrollDriven = false,
 }: {
   variant: SignatureVariant;
   className?: string;
   interactive?: boolean;
-  scrollDriven?: boolean;
 }) {
   const ref = useRef<HTMLCanvasElement | null>(null);
 
@@ -41,48 +40,35 @@ export default function Signature({
     const handle = attach(canvas, program, reduced);
     if (!handle) return;
 
-    const cleanups: (() => void)[] = [() => handle.destroy()];
-
-    if (scrollDriven && !reduced) {
-      const st = ScrollTrigger.create({
-        trigger: canvas,
-        start: "top bottom",
-        end: "bottom top",
-        onUpdate: (self) => handle.setProgress(self.progress),
-      });
-      cleanups.push(() => st.kill());
+    if (!interactive || !hasFinePointer() || reduced) {
+      return () => handle.destroy();
     }
 
-    if (interactive && hasFinePointer() && !reduced) {
-      // quickTo would be overkill here: the engine already smooths the value,
-      // this just reports where the pointer is relative to this canvas
-      const onMove = (e: PointerEvent) => {
-        const rect = canvas.getBoundingClientRect();
-        const inside =
-          e.clientX >= rect.left - 160 &&
-          e.clientX <= rect.right + 160 &&
-          e.clientY >= rect.top - 160 &&
-          e.clientY <= rect.bottom + 160;
-        handle.setPointer(
-          inside ? e.clientX - rect.left : null,
-          inside ? e.clientY - rect.top : null,
-        );
-      };
-      const onLeave = () => handle.setPointer(null, null);
+    // the engine smooths the value, so this only has to report where the
+    // pointer is relative to this canvas
+    const onMove = (e: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const near =
+        e.clientX >= rect.left - 160 &&
+        e.clientX <= rect.right + 160 &&
+        e.clientY >= rect.top - 160 &&
+        e.clientY <= rect.bottom + 160;
+      handle.setPointer(
+        near ? e.clientX - rect.left : null,
+        near ? e.clientY - rect.top : null,
+      );
+    };
+    const onLeave = () => handle.setPointer(null, null);
 
-      window.addEventListener("pointermove", onMove, { passive: true });
-      window.addEventListener("pointerleave", onLeave);
-      cleanups.push(() => {
-        window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("pointerleave", onLeave);
-      });
-    }
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("pointerleave", onLeave);
 
-    // late layout shifts (fonts, pinned sections) move the trigger bounds
-    if (scrollDriven && !reduced) gsap.delayedCall(0.4, () => ScrollTrigger.refresh());
-
-    return () => cleanups.forEach((fn) => fn());
-  }, [variant, interactive, scrollDriven]);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerleave", onLeave);
+      handle.destroy();
+    };
+  }, [variant, interactive]);
 
   return (
     <canvas

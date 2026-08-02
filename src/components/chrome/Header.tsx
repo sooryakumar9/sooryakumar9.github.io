@@ -11,10 +11,18 @@ const nav = [
   { href: "/about", label: "About" },
 ];
 
+const socials = [
+  { href: profile.github, label: "GitHub", glyph: "GH" },
+  { href: profile.linkedin, label: "LinkedIn", glyph: "in" },
+];
+
 /**
- * Sticky header. It sheds its background at the top of the page and picks up a
- * blurred panel once you have scrolled past the hero, so the hero canvas is
- * never sitting behind a bar.
+ * A floating capsule rather than a full width bar, so the hero canvas runs
+ * behind and past it on every side.
+ *
+ * It sits inset from the right by more than the scroll rail's own offset, so
+ * the two never overlap. The pill gains its border and blur once you have
+ * scrolled off the hero; at the top it is almost invisible.
  */
 export default function Header() {
   const [lifted, setLifted] = useState(false);
@@ -28,22 +36,38 @@ export default function Header() {
   }, []);
 
   return (
-    <header
-      className={`fixed inset-x-0 top-0 z-70 transition-colors duration-500 ${
-        // 72% left large light headings legible through the bar on mobile
-        lifted ? "border-line bg-bg/88 border-b backdrop-blur-xl" : "border-b border-transparent"
-      }`}
-    >
-      <div className="page-shell flex items-center justify-between py-4 md:py-5">
+    <header className="pointer-events-none fixed inset-x-0 top-3 z-70 px-3 md:top-5 md:px-6">
+      <div
+        // deliberately not `page-shell`: its 60px desktop gutter is a page
+        // measure, and inside a pill it just pushes the contents to the middle
+        className={`rounded-chip pointer-events-auto mx-auto flex max-w-[1360px] items-center justify-between gap-4 py-2.5 pr-2.5 pl-4 transition-all duration-500 md:py-3 md:pr-3 md:pl-5 ${
+          lifted
+            ? "border-line bg-bg/85 border backdrop-blur-xl"
+            : "border border-transparent"
+        }`}
+      >
         <Link
           href="/"
-          className="display hover:text-accent text-lg tracking-tight transition-colors md:text-xl"
+          className="group flex items-center gap-3"
+          aria-label={`${profile.name} — home`}
         >
-          {profile.name}
-          <span className="text-accent">.</span>
+          {/* monogram stands in for the avatar the design would otherwise use */}
+          <span
+            aria-hidden
+            className="border-line-strong text-accent grid h-8 w-8 shrink-0 place-items-center rounded-full border font-mono text-[11px] tracking-tight transition-colors group-hover:border-[var(--c-accent)]"
+          >
+            SK
+          </span>
+          {/* the name is dropped below sm: at 390px the pill cannot hold the
+              monogram, the name, the nav and the CTA without wrapping, and the
+              monogram already carries the identity */}
+          <span className="display group-hover:text-accent hidden text-base whitespace-nowrap transition-colors sm:inline md:text-lg">
+            {profile.name}
+            <span className="text-accent">.</span>
+          </span>
         </Link>
 
-        <nav aria-label="Primary" className="flex items-center gap-5 md:gap-8">
+        <nav aria-label="Primary" className="flex items-center gap-4 md:gap-6">
           {nav.map((item) => {
             const active = pathname.startsWith(item.href);
             return (
@@ -59,16 +83,35 @@ export default function Header() {
               </Link>
             );
           })}
+
           <a
             href={profile.resume}
             className="link-sweep text-muted hover:text-fg hidden text-sm transition-colors sm:inline"
           >
             Résumé <span aria-hidden>↗</span>
           </a>
+
+          <span aria-hidden className="bg-line hidden h-5 w-px sm:block" />
+
+          <span className="hidden items-center gap-1.5 sm:flex">
+            {socials.map((s) => (
+              <a
+                key={s.label}
+                href={s.href}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={s.label}
+                className="border-line text-muted hover:border-accent hover:text-accent grid h-8 w-8 place-items-center rounded-full border font-mono text-[10px] transition-colors"
+              >
+                <span aria-hidden>{s.glyph}</span>
+              </a>
+            ))}
+          </span>
+
           <Magnetic>
             <a
               href={`mailto:${profile.email}`}
-              className="border-line-strong hover:border-accent hover:text-accent rounded-chip inline-block border px-3 py-1.5 text-sm transition-colors md:px-4"
+              className="border-line-strong hover:border-accent hover:text-accent rounded-chip inline-block border px-3 py-1.5 text-sm whitespace-nowrap transition-colors md:px-4"
             >
               Say hello
             </a>

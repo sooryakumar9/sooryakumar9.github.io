@@ -35,7 +35,7 @@ export default function Bench() {
               className="tech-edge rounded-frame border-line bg-surface flex h-full flex-col overflow-hidden border"
             >
               <div className="border-line relative h-44 border-b md:h-52">
-                <Signature variant={p.signature} scrollDriven />
+                <Signature variant={p.signature} />
                 {p.live && (
                   <span className="border-line bg-bg/70 text-muted rounded-chip absolute top-4 right-4 flex items-center gap-2 border px-3 py-1 font-mono text-xs backdrop-blur">
                     <span aria-hidden className="status-dot" />

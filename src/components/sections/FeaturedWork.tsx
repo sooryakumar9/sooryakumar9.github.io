@@ -161,13 +161,21 @@ export default function FeaturedWork() {
               className="tech-edge rounded-frame border-line bg-surface relative w-[82vw] shrink-0 snap-center overflow-hidden border md:w-[46vw] lg:w-[36vw]"
             >
               <div className="border-line relative h-48 overflow-hidden border-b md:h-60">
-                {/* deliberately not scroll driven: these cards travel
-                    horizontally inside a pinned stage, so their vertical
-                    position barely changes and a scroll trigger would sit at a
-                    constant progress. They run on the clock instead. */}
                 <div className="fw-art absolute inset-0 scale-125">
                   <Signature variant={p.signature} />
                 </div>
+
+                {/* the counter rides the active card rather than sitting on a
+                    control row; the buttons below stay the keyboard affordance */}
+                <span
+                  aria-hidden
+                  className={`border-line bg-bg/80 rounded-chip absolute top-4 left-4 border px-3 py-1 font-mono text-xs backdrop-blur transition-opacity duration-500 ${
+                    i === index ? "opacity-100" : "opacity-0"
+                  }`}
+                >
+                  <span className="text-accent">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="text-muted"> / {String(featured.length).padStart(2, "0")}</span>
+                </span>
               </div>
 
               <div className="p-6 md:p-7">
@@ -194,10 +202,11 @@ export default function FeaturedWork() {
           ))}
         </div>
 
-        <div className="page-shell mt-8 flex items-center justify-between gap-4 md:mt-12">
-          <p className="font-mono text-sm" aria-live="polite">
-            <span className="text-accent">{String(index + 1).padStart(2, "0")}</span>
-            <span className="text-muted"> / {String(featured.length).padStart(2, "0")}</span>
+        <div className="page-shell mt-8 flex items-center justify-end gap-4 md:mt-12">
+          {/* the visible counter now rides the active card, and that chip is
+              aria-hidden, so the position is announced here instead */}
+          <p className="sr-only" aria-live="polite">
+            Project {index + 1} of {featured.length}: {featured[index].title}
           </p>
 
           <div className="flex gap-2">

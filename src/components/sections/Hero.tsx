@@ -191,9 +191,15 @@ export default function Hero() {
           shell rather than a narrow reading column — the tagline below keeps
           its own measure */}
       <div className="page-shell relative z-10 flex flex-col items-center pt-20">
-        <p className="hero-fade eyebrow mb-8 flex items-center gap-2">
-          <span aria-hidden className="status-dot" />
-          Available for work — {profile.location}
+        {/* wrapped as two units so that when the line breaks on a phone the
+            status dot stays attached to "Available for work" instead of being
+            orphaned at the far left of the row */}
+        <p className="hero-fade eyebrow mb-8 flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+          <span className="inline-flex items-center gap-2">
+            <span aria-hidden className="status-dot shrink-0" />
+            Available for work
+          </span>
+          <span>— {profile.location}</span>
         </p>
 
         {/* the accessible name stays the real name no matter what the

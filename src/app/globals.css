@@ -395,6 +395,50 @@ html.lenis-active {
   border-top: 1px solid var(--c-line);
 }
 
+/* ---------------------------------------------------------- intro panel --- */
+
+/* the panel is cut with a folded corner, so the corner must be clipped away
+   rather than merely covered — otherwise the border still draws across it */
+.intro-panel {
+  --fold: 34px;
+  border-radius: var(--radius-frame);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--fold)) 0,
+    100% var(--fold),
+    100% 100%,
+    0 100%
+  );
+}
+
+@media (min-width: 768px) {
+  .intro-panel {
+    --fold: 52px;
+  }
+}
+
+.intro-dots {
+  background-image: radial-gradient(var(--c-line-strong) 1px, transparent 1px);
+  background-size: 18px 18px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* the dog ear itself, sitting in the notch the clip-path opened */
+.intro-fold {
+  width: var(--fold);
+  height: var(--fold);
+  background: linear-gradient(
+    225deg,
+    var(--c-surface-2) 0%,
+    var(--c-surface-2) 50%,
+    var(--c-line) 50%,
+    var(--c-line) 100%
+  );
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+  pointer-events: none;
+}
+
 /* an underline that wipes in from the left rather than simply appearing */
 .link-sweep {
   position: relative;

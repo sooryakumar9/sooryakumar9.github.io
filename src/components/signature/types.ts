@@ -11,13 +11,6 @@ export type Frame = {
   py: number | null;
   /** 0 while entering, settles at 1 — lets programs assemble on first view */
   intro: number;
-  /**
-   * 0..1 as the canvas travels through the viewport, or null when nothing is
-   * driving it. Programs that accept it advance with the scroll instead of the
-   * clock, which makes the page feel like one instrument rather than a wall of
-   * independent loops.
-   */
-  progress: number | null;
 };
 
 /**

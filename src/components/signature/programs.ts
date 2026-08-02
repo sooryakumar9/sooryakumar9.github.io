@@ -1,7 +1,7 @@
 import type { Program } from "./types";
 import type { SignatureVariant } from "@/content/types";
-import { hero, hils, rag, qsecure } from "./programs/systems";
-import { banking, blocker, madhumarga, zenpro, diavo } from "./programs/products";
+import { hero, hils, rag } from "./programs/systems";
+import { qsecure, banking, blocker, madhumarga, zenpro, diavo } from "./programs/products";
 
 /**
  * Every signature program, keyed by variant. Each one is a multi beat loop —

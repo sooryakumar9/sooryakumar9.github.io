@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Reveal from "@/components/motion/Reveal";
 import Signature from "@/components/signature/Signature";
 import Collaborate from "@/components/chrome/Collaborate";
+import { ProjectSchema } from "@/components/chrome/StructuredData";
 import { categoryLabels, getProject, projects } from "@/content/work";
 
 type Params = { slug: string };
@@ -33,6 +34,7 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
 
   return (
     <>
+      <ProjectSchema project={project} />
       <article>
         <header className="page-shell pt-32 pb-12 md:pt-44">
           <Reveal>
@@ -62,7 +64,7 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
         <Reveal>
           <div className="page-shell">
             <div className="rounded-frame border-line relative h-64 overflow-hidden border md:h-[420px]">
-              <Signature variant={project.signature} scrollDriven />
+              <Signature variant={project.signature} />
             </div>
           </div>
         </Reveal>

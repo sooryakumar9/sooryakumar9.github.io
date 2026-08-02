@@ -17,7 +17,6 @@ type Entry = {
   /** raw pointer target the smoothing chases */
   tx: number | null;
   ty: number | null;
-  progress: number | null;
 };
 
 /**
@@ -98,7 +97,6 @@ function drawEntry(entry: Entry, now: number) {
     px: entry.px,
     py: entry.py,
     intro: Math.min(1, t / 1.2),
-    progress: entry.progress,
   };
 
   // programs draw additively so overlapping light accumulates and glows
@@ -133,7 +131,6 @@ function resize(entry: Entry) {
 export type Handle = {
   destroy: () => void;
   setPointer: (x: number | null, y: number | null) => void;
-  setProgress: (p: number | null) => void;
 };
 
 /**
@@ -163,7 +160,6 @@ export function attach(
     py: null,
     tx: null,
     ty: null,
-    progress: null,
   };
 
   resize(entry);
@@ -177,7 +173,6 @@ export function attach(
         drawEntry(entry, entry.start + 3200 + i * 16);
       }
     };
-    entry.progress = 0.5;
     paint();
     const ro = new ResizeObserver(() => {
       resize(entry);
@@ -187,7 +182,6 @@ export function attach(
     return {
       destroy: () => ro.disconnect(),
       setPointer: () => {},
-      setProgress: () => {},
     };
   }
 
@@ -209,9 +203,6 @@ export function attach(
     setPointer: (x, y) => {
       entry.tx = x;
       entry.ty = y;
-    },
-    setProgress: (p) => {
-      entry.progress = p;
     },
   };
 }

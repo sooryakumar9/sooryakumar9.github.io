@@ -8,6 +8,7 @@ import Preloader from "@/components/chrome/Preloader";
 import CursorDot from "@/components/chrome/CursorDot";
 import Header from "@/components/chrome/Header";
 import Footer from "@/components/chrome/Footer";
+import { PersonSchema } from "@/components/chrome/StructuredData";
 
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
@@ -104,6 +105,7 @@ export default function RootLayout({
         </noscript>
       </head>
       <body className="antialiased">
+        <PersonSchema />
         <SmoothScroll />
         <Preloader />
         <RouteTransition />
