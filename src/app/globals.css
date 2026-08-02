@@ -1,0 +1,475 @@
+@import "tailwindcss";
+
+/*
+  Design tokens.
+
+  Substrate is near black with a single cyan accent. The accent is load
+  bearing: if something glows, it is alive — a live deployment, an active
+  slide, a focused control. Everything else is neutral.
+*/
+:root {
+  --c-bg: #08090b;
+  --c-surface: #0e1013;
+  --c-surface-2: #14181c;
+  --c-fg: #f2f5f7;
+  --c-muted: #8b949e;
+  /* the colour hero letters hold before they ignite */
+  --c-dead: #3d3d3d;
+  --c-line: rgba(242, 245, 247, 0.1);
+  --c-line-strong: rgba(242, 245, 247, 0.22);
+  --c-accent: #5eead4;
+  --c-accent-deep: #22d3ee;
+  --c-accent-soft: rgba(94, 234, 212, 0.12);
+
+  --page-max: 1360px;
+}
+
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-fg: var(--c-fg);
+  --color-muted: var(--c-muted);
+  --color-dead: var(--c-dead);
+  --color-line: var(--c-line);
+  --color-line-strong: var(--c-line-strong);
+  --color-accent: var(--c-accent);
+  --color-accent-deep: var(--c-accent-deep);
+  --color-accent-soft: var(--c-accent-soft);
+
+  --font-display: var(--font-bricolage), system-ui, sans-serif;
+  --font-sans: var(--font-manrope), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  --radius-chip: 9999px;
+  --radius-card: 18px;
+  --radius-panel: 20px;
+  --radius-frame: 28px;
+  --radius-sheet: 44px;
+
+  --spacing-gutter: 1.25rem;
+  --spacing-gutter-lg: 3.75rem;
+  --spacing-section: 4rem;
+  --spacing-section-lg: 6rem;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-quint: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+/* the rotating conic border angle needs a registered type to animate */
+@property --tech-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* ---------------------------------------------------------------- base --- */
+
+html {
+  background: var(--c-bg);
+  /* Lenis drives scrolling on fine pointers; this covers everyone else */
+  scroll-behavior: smooth;
+  /* clip rather than hidden: hidden would turn this into a scroll container
+     and break the sticky case study sidebar */
+  overflow-x: clip;
+}
+
+body {
+  /* deliberately no background: html already paints the page, and a
+     background box here would paint over any decorative layer sitting at a
+     negative z-index */
+  color: var(--c-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+/* deep links land clear of the fixed header */
+[id] {
+  scroll-margin-top: 6rem;
+}
+
+::selection {
+  background: var(--c-accent);
+  color: var(--c-bg);
+}
+
+/* the native bar is replaced by the thin rail in ScrollRail.tsx; scrolling
+   itself is untouched, only its default chrome is hidden */
+html {
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* horizontal rails keep a usable bar on touch, just a quieter one */
+.rail-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-line-strong) transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.page-shell {
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: var(--spacing-gutter);
+}
+
+@media (min-width: 768px) {
+  .page-shell {
+    padding-inline: var(--spacing-gutter-lg);
+  }
+}
+
+/* Lenis needs the html element flagged while it is driving */
+html.lenis-active {
+  scroll-behavior: auto;
+}
+
+/* ----------------------------------------------------------- keyframes --- */
+
+@keyframes page-reveal {
+  0% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes smoke-drift {
+  0% {
+    transform: translate(-8%, -6%) scale(1.25) rotate(0deg);
+  }
+  50% {
+    transform: translate(10%, 8%) scale(1.45) rotate(8deg);
+  }
+  to {
+    transform: translate(-8%, -6%) scale(1.25) rotate(0deg);
+  }
+}
+
+@keyframes smoke-drift-2 {
+  0% {
+    transform: translate(6%, 10%) scale(1.3) rotate(0deg);
+  }
+  50% {
+    transform: translate(-12%, -8%) scale(1.5) rotate(-10deg);
+  }
+  to {
+    transform: translate(6%, 10%) scale(1.3) rotate(0deg);
+  }
+}
+
+@keyframes scroll-cue {
+  0% {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(250%);
+  }
+}
+
+@keyframes caret-blink {
+  0%,
+  70%,
+  to {
+    opacity: 1;
+  }
+  20%,
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes status-breathe {
+  0%,
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.88);
+  }
+}
+
+@keyframes status-ripple {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
+  70% {
+    opacity: 0;
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+@keyframes star-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes tech-angle-spin {
+  to {
+    --tech-angle: 360deg;
+  }
+}
+
+@keyframes about-float {
+  0%,
+  to {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes dot-wave {
+  0%,
+  60%,
+  to {
+    opacity: 0.45;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes subtitle-fade {
+  0%,
+  18% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  25%,
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+/* --------------------------------------------------------- motion bits --- */
+
+.smoke {
+  position: absolute;
+  inset: -30%;
+  pointer-events: none;
+  border-radius: 9999px;
+  filter: blur(90px);
+  opacity: 0.5;
+}
+
+.smoke-a {
+  background: radial-gradient(
+    circle at 30% 40%,
+    var(--c-accent-soft),
+    transparent 62%
+  );
+  animation: smoke-drift 16s ease-in-out infinite;
+}
+
+.smoke-b {
+  background: radial-gradient(
+    circle at 70% 60%,
+    rgba(34, 211, 238, 0.1),
+    transparent 62%
+  );
+  animation: smoke-drift-2 22s ease-in-out infinite;
+}
+
+.status-dot {
+  position: relative;
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: var(--c-accent);
+  animation: status-breathe 2.4s ease-in-out infinite;
+}
+
+.status-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--c-accent);
+  animation: status-ripple 2.4s var(--ease-out-quint) infinite;
+}
+
+.caret {
+  animation: caret-blink 1.05s step-end infinite;
+}
+
+.star-spin {
+  display: inline-block;
+  animation: star-spin 6s linear infinite;
+}
+
+.float-slow {
+  animation: about-float 5s ease-in-out infinite;
+}
+
+/* rotating conic edge for the active featured card */
+.tech-edge {
+  position: relative;
+  isolation: isolate;
+}
+
+.tech-edge::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--tech-angle),
+    transparent 0deg,
+    var(--c-accent) 40deg,
+    var(--c-accent-deep) 80deg,
+    transparent 140deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: tech-angle-spin 6s linear infinite;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-out-quint);
+}
+
+.tech-edge[data-active="true"]::before,
+.tech-edge:hover::before,
+.tech-edge:focus-within::before {
+  opacity: 1;
+}
+
+/* the head script decides this before first paint; see layout.tsx */
+[data-intro="skip"] .preloader {
+  display: none;
+}
+
+/* the thin travelling line under the scroll cue */
+.scroll-cue-line {
+  position: relative;
+  width: 1px;
+  height: 44px;
+  overflow: hidden;
+  background: var(--c-line);
+}
+
+.scroll-cue-line::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  height: 40%;
+  background: var(--c-accent);
+  animation: scroll-cue 1.8s var(--ease-in-out-quint) infinite;
+}
+
+.hairline {
+  border-top: 1px solid var(--c-line);
+}
+
+/* an underline that wipes in from the left rather than simply appearing */
+.link-sweep {
+  position: relative;
+}
+
+.link-sweep::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: -2px;
+  height: 1px;
+  background: var(--c-accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.42s var(--ease-out-quint);
+}
+
+.link-sweep:hover::after,
+.link-sweep:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* text set in the display face at display sizes wants tighter tracking */
+.display {
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+  line-height: 0.92;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+
+/* GSAP sets the real values; these keep pre hydration paint from flashing
+   the finished state on scripted elements */
+.js-reveal {
+  opacity: 0;
+}
+
+.js-hero-char {
+  color: var(--c-dead);
+}
+
+/* ------------------------------------------------------ reduced motion --- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* nothing scripted may be left invisible when motion is off */
+  .js-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .js-hero-char {
+    color: var(--c-fg);
+  }
+
+  .smoke {
+    opacity: 0.35;
+  }
+}
