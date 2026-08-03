@@ -75,7 +75,18 @@ function tick(now: number) {
 }
 
 function drawEntry(entry: Entry, now: number) {
-  const t = (now - entry.start) / 1000;
+  /*
+   * Clamped, and not defensively — `now` is the requestAnimationFrame
+   * timestamp, which is the moment the frame *started*, while `entry.start` is
+   * a `performance.now()` taken during the previous frame's script. The first
+   * callback after attach can therefore arrive with a timestamp fractionally
+   * earlier than the start, making `t` negative.
+   *
+   * A negative `t` is silently fine for anything trigonometric, which is why
+   * this went unnoticed, but it is fatal for a program that indexes an array:
+   * `-1 % 4` is `-1` in JavaScript, not `3`.
+   */
+  const t = Math.max(0, (now - entry.start) / 1000);
   const { ctx, w, h } = entry;
 
   // trail: instead of clearing, lay down a translucent wash so motion leaves a

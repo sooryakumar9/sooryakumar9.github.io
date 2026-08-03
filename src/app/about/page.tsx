@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import TransitionLink from "@/components/motion/TransitionLink";
 import Reveal from "@/components/motion/Reveal";
 import Journey from "@/components/sections/Journey";
 import RotatingSubtitle from "@/components/sections/RotatingSubtitle";
@@ -25,12 +25,12 @@ export default function AboutPage() {
 
         <div className="page-shell relative z-10">
           <Reveal>
-            <Link
+            <TransitionLink
               href="/"
               className="text-muted hover:text-fg mb-10 inline-flex items-center gap-2 text-sm transition-colors"
             >
               <span aria-hidden>←</span> Home
-            </Link>
+            </TransitionLink>
           </Reveal>
 
           <Reveal delay={0.05}>

@@ -71,7 +71,7 @@ export default function Architecture({ arch, title }: { arch: Arch; title: strin
   };
 
   return (
-    <section aria-labelledby="arch-heading" className="mb-12">
+    <section id="s-architecture" aria-labelledby="arch-heading" className="mb-12">
       <h2 id="arch-heading" className="display mb-2 text-2xl md:text-3xl">
         How it fits together
       </h2>

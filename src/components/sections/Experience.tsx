@@ -1,4 +1,4 @@
-import Link from "next/link";
+import TransitionLink from "@/components/motion/TransitionLink";
 import Reveal from "@/components/motion/Reveal";
 import Signature from "@/components/signature/Signature";
 import { experience } from "@/content/experience";
@@ -65,7 +65,7 @@ export default function Experience() {
                   </ul>
 
                   {project && (
-                    <Link
+                    <TransitionLink
                       href={`/work/${project.slug}`}
                       className="text-fg hover:text-accent inline-flex items-center gap-2 text-sm transition-colors"
                     >
@@ -73,7 +73,7 @@ export default function Experience() {
                       <span aria-hidden className="transition-transform group-hover:translate-x-1">
                         →
                       </span>
-                    </Link>
+                    </TransitionLink>
                   )}
                 </div>
               </article>

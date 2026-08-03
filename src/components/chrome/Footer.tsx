@@ -1,4 +1,4 @@
-import Link from "next/link";
+import TransitionLink from "@/components/motion/TransitionLink";
 import { profile } from "@/content/profile";
 
 const menu = [
@@ -23,9 +23,9 @@ export default function Footer() {
           <ul className="space-y-2">
             {menu.map((item) => (
               <li key={item.href}>
-                <Link href={item.href} className="link-sweep text-muted hover:text-fg transition-colors">
+                <TransitionLink href={item.href} className="link-sweep text-muted hover:text-fg transition-colors">
                   {item.label}
-                </Link>
+                </TransitionLink>
               </li>
             ))}
           </ul>

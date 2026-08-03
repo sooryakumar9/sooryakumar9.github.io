@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import TransitionLink from "@/components/motion/TransitionLink";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Magnetic from "@/components/motion/Magnetic";
@@ -46,7 +46,7 @@ export default function Header() {
             : "border border-transparent"
         }`}
       >
-        <Link
+        <TransitionLink
           href="/"
           className="group flex items-center gap-3"
           aria-label={`${profile.name} — home`}
@@ -65,13 +65,13 @@ export default function Header() {
             {profile.name}
             <span className="text-accent">.</span>
           </span>
-        </Link>
+        </TransitionLink>
 
         <nav aria-label="Primary" className="flex items-center gap-4 md:gap-6">
           {nav.map((item) => {
             const active = pathname.startsWith(item.href);
             return (
-              <Link
+              <TransitionLink
                 key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
@@ -80,7 +80,7 @@ export default function Header() {
                 }`}
               >
                 {item.label}
-              </Link>
+              </TransitionLink>
             );
           })}
 

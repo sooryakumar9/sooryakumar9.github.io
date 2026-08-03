@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import TransitionLink from "@/components/motion/TransitionLink";
 import Reveal from "@/components/motion/Reveal";
 import WorkIndex from "@/components/sections/WorkIndex";
 import Collaborate from "@/components/chrome/Collaborate";
@@ -15,12 +15,12 @@ export default function WorkPage() {
     <>
       <section className="page-shell pt-32 pb-16 md:pt-44">
         <Reveal>
-          <Link
+          <TransitionLink
             href="/"
             className="text-muted hover:text-fg mb-10 inline-flex items-center gap-2 text-sm transition-colors"
           >
             <span aria-hidden>←</span> Home
-          </Link>
+          </TransitionLink>
         </Reveal>
 
         <Reveal delay={0.05}>

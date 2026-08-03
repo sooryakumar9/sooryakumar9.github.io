@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import TransitionLink from "@/components/motion/TransitionLink";
 import { useLayoutEffect, useRef, useState } from "react";
 import { gsap, ScrollTrigger } from "@/lib/gsapSetup";
 import Signature from "@/components/signature/Signature";
@@ -158,10 +158,10 @@ export default function FeaturedWork() {
               key={p.slug}
               data-active={i === index}
               data-cursor-label="Read"
-              className="tech-edge rounded-frame border-line bg-surface relative w-[82vw] shrink-0 snap-center overflow-hidden border md:w-[46vw] lg:w-[36vw]"
+              className="fw-card tech-edge rounded-frame border-line bg-surface relative w-[82vw] shrink-0 snap-center overflow-hidden border md:w-[46vw] lg:w-[36vw]"
             >
               <div className="border-line relative h-48 overflow-hidden border-b md:h-60">
-                <div className="fw-art absolute inset-0 scale-125">
+                <div data-vt-art className="fw-art absolute inset-0 scale-125">
                   <Signature variant={p.signature} />
                 </div>
 
@@ -180,11 +180,15 @@ export default function FeaturedWork() {
 
               <div className="p-6 md:p-7">
                 <p className="eyebrow mb-3">{p.org ? p.org.split(" · ").pop() : p.period}</p>
-                <h3 className="display mb-3 text-2xl md:text-3xl">
-                  <Link href={`/work/${p.slug}`} className="hover:text-accent transition-colors">
+                <h3 data-vt-title className="display mb-3 text-2xl md:text-3xl">
+                  <TransitionLink
+                    href={`/work/${p.slug}`}
+                    morphFrom=".fw-card"
+                    className="hover:text-accent transition-colors"
+                  >
                     <span className="absolute inset-0" aria-hidden />
                     {p.title}
-                  </Link>
+                  </TransitionLink>
                 </h3>
                 <p className="text-muted mb-5 text-sm md:text-base">{p.blurb}</p>
                 <ul className="flex flex-wrap gap-2">

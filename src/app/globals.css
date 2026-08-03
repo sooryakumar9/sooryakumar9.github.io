@@ -442,23 +442,43 @@ html.lenis-active {
 /* ------------------------------------------------------ view transitions --- */
 
 /*
-  The default root cross fade is replaced with something quieter, because the
-  page already carries a lot of motion. The named pairs — the project artwork
-  and its title — morph between the card and the case study header.
+  The only page-change treatment on the site. There used to be a full screen
+  slat wipe as well, on every route except project links, and running two
+  systems side by side is what made navigation feel inconsistent.
+
+  The root pair is a quick cross fade with the outgoing page easing back a
+  little, so a change registers without anything waiting for a panel to travel.
+  The named pair — a project card's artwork and title — morphs instead.
 */
-::view-transition-old(root),
+::view-transition-old(root) {
+  animation: vt-out 0.3s var(--ease-out-quint) both;
+}
+
 ::view-transition-new(root) {
-  animation-duration: 0.32s;
-  animation-timing-function: var(--ease-out-quint);
+  animation: vt-in 0.34s var(--ease-out-quint) both;
+}
+
+@keyframes vt-out {
+  to {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes vt-in {
+  from {
+    opacity: 0;
+    transform: scale(1.008);
+  }
 }
 
 ::view-transition-group(project-art),
 ::view-transition-group(project-title) {
-  animation-duration: 0.55s;
+  animation-duration: 0.5s;
   animation-timing-function: var(--ease-out-expo);
 }
 
-/* the morphing pair should not also cross fade, or it ghosts mid flight */
+/* the morphing pair must not also cross fade, or it ghosts mid flight */
 ::view-transition-old(project-art),
 ::view-transition-new(project-art) {
   animation: none;

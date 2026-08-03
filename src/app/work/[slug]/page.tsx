@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import TransitionLink from "@/components/motion/TransitionLink";
 import { notFound } from "next/navigation";
 import Reveal from "@/components/motion/Reveal";
 import Signature from "@/components/signature/Signature";
@@ -7,6 +7,9 @@ import Collaborate from "@/components/chrome/Collaborate";
 import { ProjectSchema } from "@/components/chrome/StructuredData";
 import Architecture from "@/components/sections/Architecture";
 import { architectures } from "@/content/architecture";
+import FuzzySearch from "@/components/demos/FuzzySearch";
+import CipherChannels from "@/components/demos/CipherChannels";
+import CaseStudyNav, { type NavSection } from "@/components/sections/CaseStudyNav";
 import { categoryLabels, getProject, projects } from "@/content/work";
 
 type Params = { slug: string };
@@ -34,18 +37,34 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
   const index = projects.findIndex((p) => p.slug === slug);
   const next = projects[(index + 1) % projects.length];
 
+  // ids come from the same source as the headings, so the rail can never drift
+  // out of sync with what is actually on the page
+  const slug2id = (s: string) =>
+    "s-" + s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const navSections: NavSection[] = [
+    ...project.sections.map((sec) => ({ id: slug2id(sec.heading), label: sec.heading })),
+    ...(project.slug === "diavo" ? [{ id: "s-try-the-search", label: "Try the search" }] : []),
+    ...(project.slug === "q-secure-chat"
+      ? [{ id: "s-interceptor", label: "What an interceptor holds" }]
+      : []),
+    ...(architectures[project.slug] ? [{ id: "s-architecture", label: "How it fits together" }] : []),
+    ...(project.constraints ? [{ id: "s-shaped", label: "What shaped it" }] : []),
+    ...(project.progress ? [{ id: "s-stands", label: "Where it stands" }] : []),
+    { id: "s-outcome", label: "Outcome" },
+  ];
+
   return (
     <>
       <ProjectSchema project={project} />
       <article>
         <header className="page-shell pt-32 pb-12 md:pt-44">
           <Reveal>
-            <Link
+            <TransitionLink
               href="/work"
               className="text-muted hover:text-fg mb-10 inline-flex items-center gap-2 text-sm transition-colors"
             >
               <span aria-hidden>←</span> All work
-            </Link>
+            </TransitionLink>
           </Reveal>
 
           <Reveal delay={0.05}>
@@ -140,17 +159,33 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
                 )}
               </dl>
             </Reveal>
+
+            <div className="mt-10">
+              <CaseStudyNav sections={navSections} />
+            </div>
           </aside>
 
           <div className="md:col-span-8">
             {project.sections.map((s, i) => (
               <Reveal key={s.heading} delay={i * 0.04}>
-                <section className="mb-12">
+                <section id={slug2id(s.heading)} className="mb-12">
                   <h2 className="display mb-4 text-2xl md:text-3xl">{s.heading}</h2>
                   <p className="text-muted text-base leading-relaxed md:text-lg">{s.body}</p>
                 </section>
               </Reveal>
             ))}
+
+            {project.slug === "diavo" && (
+              <Reveal>
+                <FuzzySearch />
+              </Reveal>
+            )}
+
+            {project.slug === "q-secure-chat" && (
+              <Reveal>
+                <CipherChannels />
+              </Reveal>
+            )}
 
             {architectures[project.slug] && (
               <Reveal>
@@ -160,7 +195,7 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
 
             {project.constraints && (
               <Reveal>
-                <section className="mb-12">
+                <section id="s-shaped" className="mb-12">
                   <h2 className="display mb-5 text-2xl md:text-3xl">What shaped it</h2>
                   <ul className="space-y-3">
                     {project.constraints.map((c) => (
@@ -178,7 +213,7 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
 
             {project.progress && (
               <Reveal>
-                <section className="mb-12">
+                <section id="s-stands" className="mb-12">
                   <h2 className="display mb-5 text-2xl md:text-3xl">Where it stands</h2>
                   <div className="grid gap-6 sm:grid-cols-3">
                     {(
@@ -215,7 +250,7 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
             )}
 
             <Reveal>
-              <section className="rounded-panel border-line bg-surface border p-6 md:p-8">
+              <section id="s-outcome" className="rounded-panel border-line bg-surface border p-6 md:p-8">
                 <h2 className="eyebrow mb-3">Outcome</h2>
                 <p className="display text-xl leading-snug font-light md:text-2xl">
                   {project.outcome}
@@ -227,7 +262,7 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
       </article>
 
       <nav aria-label="Next project" className="page-shell pb-8">
-        <Link
+        <TransitionLink
           href={`/work/${next.slug}`}
           className="hairline group flex flex-wrap items-center justify-between gap-4 pt-8"
         >
@@ -241,7 +276,7 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
           >
             →
           </span>
-        </Link>
+        </TransitionLink>
       </nav>
 
       <Collaborate />

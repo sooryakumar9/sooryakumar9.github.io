@@ -1,4 +1,4 @@
-import Link from "next/link";
+import TransitionLink from "@/components/motion/TransitionLink";
 import Reveal from "@/components/motion/Reveal";
 import Signature from "@/components/signature/Signature";
 import { benchSlugs, projectsBySlugs } from "@/content/work";
@@ -66,12 +66,12 @@ export default function Bench() {
                 )}
 
                 <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-2 pt-2">
-                  <Link
+                  <TransitionLink
                     href={`/work/${p.slug}`}
                     className="hover:text-accent text-sm transition-colors"
                   >
                     Read more <span aria-hidden>→</span>
-                  </Link>
+                  </TransitionLink>
                   {p.live && (
                     <a
                       href={p.live}

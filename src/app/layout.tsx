@@ -3,7 +3,6 @@ import { Bricolage_Grotesque, Manrope, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import SmoothScroll from "@/components/motion/SmoothScroll";
 import ScrollRail from "@/components/motion/ScrollRail";
-import RouteTransition from "@/components/motion/RouteTransition";
 import Preloader from "@/components/chrome/Preloader";
 import CursorDot from "@/components/chrome/CursorDot";
 import Header from "@/components/chrome/Header";
@@ -108,7 +107,6 @@ export default function RootLayout({
         <PersonSchema />
         <SmoothScroll />
         <Preloader />
-        <RouteTransition />
         <ScrollRail />
         <CursorDot />
         <a

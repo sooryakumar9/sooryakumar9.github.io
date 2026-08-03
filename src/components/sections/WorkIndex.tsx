@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRef, useState } from "react";
 import { Flip, gsap, prefersReducedMotion } from "@/lib/gsapSetup";
-import { useViewTransition } from "@/lib/useViewTransition";
+import TransitionLink from "@/components/motion/TransitionLink";
+import Tilt from "@/components/motion/Tilt";
 import Signature from "@/components/signature/Signature";
 import { projects, categoryLabels } from "@/content/work";
 import type { Category } from "@/content/types";
@@ -28,7 +28,6 @@ const counts: Record<Filter, number> = {
 export default function WorkIndex() {
   const [filter, setFilter] = useState<Filter>("all");
   const grid = useRef<HTMLUListElement | null>(null);
-  const navigate = useViewTransition();
 
   const apply = (next: Filter) => {
     if (next === filter) return;
@@ -86,13 +85,12 @@ export default function WorkIndex() {
 
       <ul ref={grid} className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {visible.map((p) => (
-          <li
-            key={p.slug}
-            data-flip-id={p.slug}
-            data-cursor-label="Read"
-            className="wk-card tech-edge rounded-frame border-line bg-surface relative flex flex-col overflow-hidden border"
-          >
-            <div data-vt-art className="border-line relative h-40 border-b">
+          <li key={p.slug} data-flip-id={p.slug} className="wk-card">
+            <Tilt
+              data-cursor-label="Read"
+              className="tech-edge rounded-frame border-line bg-surface relative flex h-full flex-col overflow-hidden border"
+            >
+            <div data-vt-art data-depth="-18" className="border-line relative h-40 border-b">
               <Signature variant={p.signature} />
               {p.live && (
                 <span className="border-line bg-bg/70 text-muted rounded-chip absolute top-3 right-3 flex items-center gap-2 border px-2.5 py-1 font-mono text-xs backdrop-blur">
@@ -102,24 +100,19 @@ export default function WorkIndex() {
               )}
             </div>
 
-            <div className="flex flex-1 flex-col p-5">
+            <div data-depth="26" className="flex flex-1 flex-col p-5">
               <p className="eyebrow mb-2">
                 {categoryLabels[p.category]} · {p.period}
               </p>
               <h2 data-vt-title className="display mb-2 text-xl">
-                <Link
+                <TransitionLink
                   href={`/work/${p.slug}`}
-                  onClick={(e) => {
-                    // let modified clicks open a new tab as normal
-                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-                    e.preventDefault();
-                    navigate(`/work/${p.slug}/`, e.currentTarget.closest<HTMLElement>(".wk-card"));
-                  }}
+                  morphFrom=".wk-card"
                   className="hover:text-accent transition-colors"
                 >
                   <span className="absolute inset-0" aria-hidden />
                   {p.title}
-                </Link>
+                </TransitionLink>
               </h2>
               <p className="text-muted mb-4 flex-1 text-sm">{p.blurb}</p>
               <ul className="flex flex-wrap gap-1.5">
@@ -133,6 +126,7 @@ export default function WorkIndex() {
                 ))}
               </ul>
             </div>
+            </Tilt>
           </li>
         ))}
       </ul>

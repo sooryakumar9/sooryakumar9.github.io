@@ -617,10 +617,15 @@ const diavo = define<{ dishes: number[][]; corpus: { x: number; y: number; r: nu
     const a = ease(intro);
     const unit = Math.min(w, h);
     const CYCLE = 4.6;
-    const which = Math.floor(t / CYCLE) % dishes.length;
+    // normalised so the index is valid for any `t`, including a negative one:
+    // the engine clamps it too, but a program that crashes when handed an
+    // unexpected clock is a program that is wrong on its own terms
+    const n = dishes.length;
+    const which = n > 0 ? ((Math.floor(t / CYCLE) % n) + n) % n : 0;
     const [stage, local] = phase(t % CYCLE, [0.9, 2.4, 1.3]);
     const open = stage === 0 ? ease(local) : stage === 1 ? 1 : 1 - ease(local);
-    const vals = dishes[which];
+    const vals = dishes[which] ?? [];
+    if (vals.length === 0) return;
 
     // the wider corpus, faint behind
     for (const c of corpus) {
@@ -633,8 +638,11 @@ const diavo = define<{ dishes: number[][]; corpus: { x: number; y: number; r: nu
     const rOuter = unit * 0.3 * (0.35 + open * 0.65);
     const rInner = rOuter * 0.52;
 
-    // the ring, split by proportion — filled wedges, not strokes
-    let angle = -Math.PI / 2;
+    // the ring, split by proportion — filled wedges, not strokes.
+    // It rotates slowly and continuously: with a fixed start angle the whole
+    // canvas was static for the 2.4s hold in the middle of every cycle, which
+    // is the same defect that had to be fixed in the résumé and HILS panels.
+    let angle = -Math.PI / 2 + t * 0.11;
     for (let i = 0; i < vals.length; i++) {
       const sweep = vals[i] * Math.PI * 2 * open;
       const shade = 1 - i / vals.length;

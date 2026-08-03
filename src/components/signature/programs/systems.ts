@@ -204,9 +204,13 @@ const hils = define<{ scripts: number[] }>({
       const tone = done && i === LOG.length - 1 ? ACCENT : settled ? INK : ACCENT;
       const alpha = (settled ? 0.55 : 0.95) * a;
 
-      // the caret marker on every line
-      ctx.fillStyle = rgba(tone, alpha);
+      // the caret marker on every line. The last one blinks — including once
+      // the run has finished, so the held state at the end of each cycle still
+      // has something alive in it.
       const cw = Math.max(2, unit * 0.014);
+      const isLast = i === Math.min(active, LOG.length - 1);
+      const blink = isLast ? 0.45 + 0.55 * Math.abs(Math.sin(t * 2.6)) : 1;
+      ctx.fillStyle = rgba(tone, alpha * blink);
       ctx.fillRect(bodyX + bodyW * 0.05, y - cw / 2, cw, cw);
 
       if (big) {
