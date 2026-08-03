@@ -12,7 +12,7 @@ import {
   mulberry32,
   rgba,
 } from "../types";
-import { define, labelPx, phase, roomForLabels, scaled } from "./shared";
+import { define, label, labelPx, panel, phase, roomForLabels, scaled } from "./shared";
 
 /**
  * These programs render anywhere from a 380x160 card to a 1240x420 banner, so
@@ -103,181 +103,230 @@ const qsecure = define<{ cols: number; rows: number }>({
 type Pt = { x: number; y: number };
 
 /**
- * Why the second factor exists.
+ * The transfer screen, running the flow the project exists to demonstrate.
  *
- * A transfer is attempted with the password alone: the field fills, both keys
- * are checked, and because only one of them is satisfied the gate holds — the
- * transfer bar drives partway across and is thrown back. Then the face
- * resolves beside it, both keys go green, and the same transfer completes
- * without resistance.
+ * A balance, a transfer being composed, a confirm. The password alone leaves
+ * the transfer **pending**; a face verification panel slides in and resolves;
+ * the transfer clears, drops into the ledger, and the balance ticks down.
  *
- * It is the argument the project makes, animated: a stolen password is not
- * enough. The refusal followed by the acceptance is also what makes it worth
- * watching rather than a status light changing colour.
+ * The argument is the same one the earlier version made — a password on its
+ * own does not move money — but drawn as software rather than as three bars,
+ * which is the language that worked for the HILS panel and the analyser.
  */
-const banking = define<{ face: Pt[] }>({
-  trail: 0.45,
+const banking = define<{ face: Pt[]; rows: number[] }>({
   init: (w, h) => {
-    // A head silhouette in unit space. Random radii around a circle produce a
-    // spiky star rather than anything face shaped, so the outline is an
-    // explicit oval that narrows toward the chin.
+    // a head silhouette in unit space for the verification thumbnail
     const face: Pt[] = [];
-    const N = 44;
+    const N = 30;
     for (let i = 0; i < N; i++) {
       const ang = (i / N) * Math.PI * 2 - Math.PI / 2;
       const c = Math.cos(ang);
       const sn = Math.sin(ang);
-      // taper the lower half so the jaw comes to a chin
-      const taper = sn > 0 ? 1 - 0.3 * Math.pow(sn, 2) : 1;
-      face.push({ x: c * 0.66 * taper, y: sn * (sn > 0 ? 0.95 : 0.86) });
+      const taper = sn > 0 ? 1 - 0.3 * sn * sn : 1;
+      face.push({ x: c * 0.62 * taper, y: sn * (sn > 0 ? 0.94 : 0.84) });
     }
+    const rand = mulberry32(41);
     void w;
     void h;
-    return { face };
+    return { face, rows: Array.from({ length: 3 }, () => 0.4 + rand() * 0.4) };
   },
-  draw: ({ ctx, w, h, t, intro }, { face }) => {
+  draw: ({ ctx, w, h, t, intro }, { face, rows }) => {
     const a = ease(intro);
     const unit = Math.min(w, h);
+    const big = roomForLabels(w, h);
+    const pad = w * 0.04;
 
-    // refused attempt, then accepted attempt, then a beat before repeating
-    const [stage, local] = phase(t, [1.1, 1.3, 0.9, 1.1, 1.5, 1.1]);
-    // 0 fill password  1 gate holds, bar bounces  2 pause
-    // 3 face resolves  4 both green, transfer clears  5 rest
-    const refusing = stage <= 2;
-    const faceOn = stage >= 3;
-    const bothGreen = stage >= 4;
+    // compose -> confirm -> pending -> verifying -> cleared -> hold
+    const [stage, local] = phase(t, [1.4, 0.8, 1.0, 1.6, 1.2, 1.6]);
+    const confirmed = stage >= 1;
+    const pending = stage === 2;
+    const verifying = stage === 3;
+    const cleared = stage >= 4;
 
-    const keyW = w * 0.34;
-    const keyH = Math.max(10, unit * 0.13);
-    const keyY = h * 0.14;
-    const leftX = w * 0.08;
-    const rightX = w - w * 0.08 - keyW;
+    const innerW = w - pad * 2;
+    const innerH = h - pad * 2;
 
-    // ---- key one: the password, always satisfied ----
-    const pwFill = stage === 0 ? ease(local) : 1;
-    ctx.fillStyle = rgba(INK, 0.07 * a);
-    ctx.fillRect(leftX, keyY, keyW, keyH);
-    ctx.fillStyle = rgba(ACCENT, 0.55 * a);
-    ctx.fillRect(leftX, keyY, keyW * pwFill, keyH);
-    // password dots, so the field reads as a credential rather than a bar
+    /* ---- the window ---- */
+    panel(ctx, pad, pad, innerW, innerH, unit * 0.05);
+    ctx.strokeStyle = rgba(INK, 0.14 * a);
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    /* ---- balance, top left ---- */
+    const balY = pad + innerH * 0.11;
+    label(ctx, "BALANCE", pad + innerW * 0.05, balY - unit * 0.055, w, h, rgba(INK, 0.35 * a));
     {
-      const dots = 9;
-      const r = keyH * 0.16;
-      for (let i = 0; i < dots; i++) {
-        const dx = leftX + keyW * ((i + 0.5) / dots);
-        const shown = pwFill > (i + 0.4) / dots;
-        ctx.fillStyle = rgba(shown ? INK : INK, (shown ? 0.85 : 0.12) * a);
-        ctx.beginPath();
-        ctx.arc(dx, keyY + keyH / 2, r, 0, Math.PI * 2);
-        ctx.fill();
+      // the figure ticks down once the transfer clears; the bar stands in for
+      // it below the label threshold
+      const drop = cleared ? 0.12 : 0;
+      const barW = innerW * 0.28 * (1 - drop);
+      ctx.fillStyle = rgba(INK, 0.5 * a);
+      ctx.fillRect(pad + innerW * 0.05, balY - unit * 0.018, barW, Math.max(4, unit * 0.036));
+    }
+
+    /* ---- the compose form ---- */
+    const formX = pad + innerW * 0.05;
+    const formW = innerW * 0.5;
+    const formY = pad + innerH * 0.3;
+    const rowH = Math.max(9, unit * 0.1);
+    const gapY = rowH * 1.35;
+
+    const field = (i: number, labelText: string, fill: number) => {
+      const y = formY + gapY * i;
+      panel(ctx, formX, y, formW, rowH, rowH * 0.28);
+      ctx.fillStyle = rgba(INK, 0.05 * a);
+      ctx.fill();
+      ctx.strokeStyle = rgba(INK, 0.16 * a);
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      if (big) {
+        label(ctx, labelText, formX + formW * 0.05, y + rowH / 2, w, h, rgba(INK, 0.34 * a));
       }
+      // the entered value
+      ctx.fillStyle = rgba(INK, 0.55 * a);
+      const vx = formX + formW * (big ? 0.34 : 0.1);
+      ctx.fillRect(vx, y + rowH * 0.34, (formW - (vx - formX)) * 0.8 * fill, rowH * 0.32);
+    };
+
+    // the fields fill in over the compose beat
+    field(0, "TO", stage === 0 ? clamp01(local * 2.4) : 1);
+    field(1, "AMOUNT", stage === 0 ? clamp01(local * 2.4 - 1) : 1);
+
+    /* ---- confirm ---- */
+    const btnY = formY + gapY * 2;
+    panel(ctx, formX, btnY, formW * 0.52, rowH, rowH * 0.5);
+    ctx.fillStyle = rgba(ACCENT, (confirmed ? 0.28 : 0.1) * a);
+    ctx.fill();
+    ctx.strokeStyle = rgba(ACCENT, (confirmed ? 0.9 : 0.4) * a);
+    ctx.lineWidth = confirmed ? 1.6 : 1;
+    ctx.stroke();
+    if (big) {
+      label(
+        ctx,
+        "CONFIRM",
+        formX + formW * 0.26,
+        btnY + rowH / 2,
+        w,
+        h,
+        rgba(ACCENT, (confirmed ? 1 : 0.55) * a),
+        "center",
+      );
     }
 
-    // ---- key two: the face, only satisfied on the second attempt ----
-    const faceFill = bothGreen ? 1 : faceOn ? ease(local) : 0;
-    ctx.fillStyle = rgba(INK, 0.07 * a);
-    ctx.fillRect(rightX, keyY, keyW, keyH);
-    if (faceFill > 0) {
-      ctx.fillStyle = rgba(ACCENT, 0.55 * a);
-      ctx.fillRect(rightX, keyY, keyW * faceFill, keyH);
-    }
+    /* ---- the verification panel, right hand side ---- */
+    const vW = innerW * 0.3;
+    const vX = pad + innerW - vW - innerW * 0.05;
+    const vY = pad + innerH * 0.24;
+    const vH = innerH * 0.46;
+    // The panel is always drawn, dim, and only lights up for the check. An
+    // earlier version mounted it on the verify beat, which left the right half
+    // of a wide banner empty for three of every seven seconds.
+    const show = verifying ? ease(clamp01(local * 2.2)) : cleared ? 1 : 0;
 
-    // the face lattice sits under key two. Its outline is always drawn so the
-    // right half of the frame is never empty; only the fill resolves.
-    const fcx = rightX + keyW / 2;
-    const fcy = h * 0.55;
-    const fr = unit * 0.26;
-    {
-      const trace = (upto: number) => {
-        ctx.beginPath();
-        for (let i = 0; i < upto; i++) {
-          const pt = face[i];
-          const x = fcx + pt.x * fr;
-          const y = fcy + pt.y * fr;
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        if (upto === face.length) ctx.closePath();
-      };
+    panel(ctx, vX, vY, vW, vH, unit * 0.045);
+    ctx.fillStyle = rgba(ACCENT, (0.015 + 0.035 * show) * a);
+    ctx.fill();
+    ctx.strokeStyle = rgba(show > 0.05 ? ACCENT : INK, (0.14 + 0.42 * show) * a);
+    ctx.lineWidth = 1 + 0.4 * show;
+    ctx.stroke();
 
-      // the unresolved outline
-      trace(face.length);
-      ctx.strokeStyle = rgba(INK, 0.14 * a);
-      ctx.lineWidth = Math.max(1, unit * 0.005);
+    const fcx = vX + vW / 2;
+    const fcy = vY + vH * 0.44;
+    const fr = Math.min(vW, vH) * 0.3;
+
+    const traceTo = (upto: number) => {
+      ctx.beginPath();
+      for (let i = 0; i < upto; i++) {
+        const x = fcx + face[i].x * fr;
+        const y = fcy + face[i].y * fr;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      if (upto === face.length) ctx.closePath();
+    };
+
+    // the idle silhouette, so the panel is never an empty box
+    traceTo(face.length);
+    ctx.strokeStyle = rgba(INK, 0.16 * a);
+    ctx.lineWidth = Math.max(1, unit * 0.005);
+    ctx.stroke();
+
+    if (show > 0.01) {
+      const traced = cleared ? 1 : clamp01(local * 2.6);
+      traceTo(Math.max(2, Math.floor(traced * face.length)));
+      ctx.strokeStyle = rgba(ACCENT, 0.9 * a * show);
+      ctx.lineWidth = Math.max(1.2, unit * 0.008);
       ctx.stroke();
 
-      if (faceFill > 0.01) {
-        trace(Math.max(2, Math.floor(faceFill * face.length)));
-        ctx.strokeStyle = rgba(ACCENT, 0.85 * a);
-        ctx.lineWidth = Math.max(1.4, unit * 0.009);
-        ctx.stroke();
-        if (bothGreen) {
-          trace(face.length);
-          ctx.fillStyle = rgba(ACCENT, 0.1 * a);
-          ctx.fill();
-        }
-      }
-
-      // features, so the silhouette reads as a face rather than an oval. They
-      // arrive with the second half of the scan.
-      const feat = clamp01((faceFill - 0.45) / 0.55);
+      // eyes and mouth, so the silhouette reads as a face rather than an oval
+      const feat = clamp01((traced - 0.5) / 0.5) * show;
       if (feat > 0.01) {
-        ctx.fillStyle = rgba(ACCENT, 0.8 * a * feat);
-        const eyeR = fr * 0.07;
+        ctx.fillStyle = rgba(ACCENT, 0.85 * a * feat);
         for (const sx of [-1, 1]) {
           ctx.beginPath();
-          ctx.ellipse(fcx + sx * fr * 0.28, fcy - fr * 0.2, eyeR * 1.5, eyeR, 0, 0, Math.PI * 2);
+          ctx.ellipse(fcx + sx * fr * 0.26, fcy - fr * 0.18, fr * 0.09, fr * 0.06, 0, 0, Math.PI * 2);
           ctx.fill();
         }
-        ctx.strokeStyle = rgba(ACCENT, 0.65 * a * feat);
-        ctx.lineWidth = Math.max(1.2, unit * 0.007);
+        ctx.strokeStyle = rgba(ACCENT, 0.7 * a * feat);
+        ctx.lineWidth = Math.max(1, unit * 0.006);
         ctx.beginPath();
-        ctx.moveTo(fcx - fr * 0.2, fcy + fr * 0.36);
-        ctx.quadraticCurveTo(fcx, fcy + fr * 0.46, fcx + fr * 0.2, fcy + fr * 0.36);
+        ctx.moveTo(fcx - fr * 0.18, fcy + fr * 0.34);
+        ctx.quadraticCurveTo(fcx, fcy + fr * 0.44, fcx + fr * 0.18, fcy + fr * 0.34);
         ctx.stroke();
+      }
+
+      if (!cleared) {
+        const sy = vY + vH * (0.16 + 0.56 * ((t * 0.9) % 1));
+        gradientLine(ctx, vX, sy, vX + vW, sy, ACCENT, 0, 0.6 * a * show, 1);
       }
     }
 
-    // ---- the transfer ----
-    const gateX = w * 0.08;
-    const gateW = w * 0.84;
-    const barH = Math.max(10, unit * 0.13);
-    const trackY = h * 0.87;
-    ctx.fillStyle = rgba(INK, 0.07 * a);
-    ctx.fillRect(gateX, trackY - barH / 2, gateW, barH);
-
-    let travel = 0;
-    let thrown = false;
-    if (stage === 1) {
-      // out and back: the transfer is refused
-      const k = local;
-      travel = k < 0.45 ? ease(k / 0.45) * 0.46 : 0.46 * (1 - ease((k - 0.45) / 0.55));
-      thrown = k >= 0.45;
-    } else if (stage === 4) {
-      travel = ease(local);
-    } else if (stage === 5) {
-      travel = 1;
+    if (big) {
+      label(
+        ctx,
+        cleared ? "VERIFIED" : verifying ? "VERIFYING" : "SECOND FACTOR",
+        fcx,
+        vY + vH * 0.86,
+        w,
+        h,
+        rgba(show > 0.05 ? ACCENT : INK, (0.3 + 0.6 * show) * a),
+        "center",
+      );
     }
 
-    if (travel > 0.001) {
-      const colour = thrown ? AMBER : ACCENT;
-      const g = ctx.createLinearGradient(gateX, 0, gateX + gateW * travel, 0);
-      g.addColorStop(0, rgba(colour, 0.35 * a));
-      g.addColorStop(1, rgba(colour, 0.95 * a));
-      ctx.fillStyle = g;
-      ctx.fillRect(gateX, trackY - barH / 2, gateW * travel, barH);
-    }
+    /* ---- the ledger ---- */
+    const ledY = pad + innerH * 0.88;
+    gradientLine(ctx, pad + innerW * 0.05, ledY, pad + innerW * 0.95, ledY, INK, 0.02 * a, 0.12 * a, 1);
 
-    // the barrier: solid while the second key is missing, gone once it is not.
-    // It is kept inside the track height so it never clips at the canvas edge.
-    if (!bothGreen) {
-      const bars = 5;
-      const bw = Math.max(2, unit * 0.013);
-      const span = bw * 2.1 * bars;
-      const barrierX = gateX + gateW * 0.5 - span / 2;
-      for (let i = 0; i < bars; i++) {
-        ctx.fillStyle = rgba(refusing && thrown ? AMBER : INK, (thrown ? 0.9 : 0.32) * a);
-        ctx.fillRect(barrierX + i * bw * 2.1, trackY - barH * 0.8, bw, barH * 1.6);
+    const lrH = Math.max(5, unit * 0.055);
+    rows.forEach((len, i) => {
+      const y = ledY + lrH * 0.5;
+      const x = pad + innerW * 0.05 + i * (innerW * 0.9) / 3;
+      const wCell = (innerW * 0.9) / 3 - innerW * 0.02;
+      // the newest row is the transfer that just cleared
+      const fresh = i === 0 && cleared;
+      ctx.fillStyle = rgba(fresh ? ACCENT : INK, (fresh ? 0.75 : 0.2) * a);
+      ctx.fillRect(x, y, wCell * len, lrH * 0.42);
+      // a tick, breathing so the held state is never perfectly still
+      const pulse = fresh ? 0.7 + 0.3 * Math.sin(t * 2.4) : 1;
+      ctx.fillStyle = rgba(fresh ? ACCENT : INK, (fresh ? 0.9 * pulse : 0.22) * a);
+      ctx.fillRect(x + wCell * 0.88, y, Math.max(3, unit * 0.02), lrH * 0.42);
+    });
+
+    /* ---- pending indicator: the transfer is stuck without the second key ---- */
+    if (pending) {
+      const dots = 3;
+      for (let i = 0; i < dots; i++) {
+        const ph = (t * 2.2 + i * 0.3) % 1;
+        const r = Math.max(1.6, unit * 0.012) * (0.6 + 0.4 * Math.sin(ph * Math.PI));
+        coreDot(
+          ctx,
+          formX + formW * 0.62 + i * unit * 0.045,
+          btnY + rowH / 2,
+          r,
+          AMBER,
+          0.85 * a,
+        );
       }
     }
   },
@@ -582,95 +631,145 @@ const zenpro = define<{ lanes: Lane[] }>({
 
 /* ----------------------------------------------------------------- diavo --- */
 
-const MACROS = [0.42, 0.3, 0.18, 0.1];
+const MACROS = ["carbs", "protein", "fat"] as const;
+const MICROS = ["fibre", "iron", "calcium"] as const;
+// real dish names, taken from the same sample the live search demo uses
+const DISHES = ["Masala dosa", "Rajma chawal", "Palak paneer", "Idli sambar"] as const;
 
 /**
- * A dish opening into what it is made of.
+ * The nutrition view the product is building.
  *
- * A solid cell expands into a filled ring split by macro proportion, with the
- * same split repeated as stacked bars beneath it so the numbers read two ways.
- * It holds long enough to take in, closes, and the next dish takes its place.
+ * A dish header, its macro split as bars filling to proportion, and micro
+ * nutrient rows populating underneath. The dish cycles and the bars refill.
  *
- * Filled arcs and blocks rather than the thin orbit lines this replaced: at a
- * card size a hairline ring is barely visible, whereas a weighted ring still
- * reads.
+ * Deliberately not the search: the same case study page carries a live fuzzy
+ * search demo further down, and showing search here too would present one
+ * feature twice. Together the canvas and the demo cover the whole product.
+ *
+ * The readout is a **percentage of the macro split**, which is what the bars
+ * already encode. It is not a calorie or gram figure: inventing one next to a
+ * real dish name would be stating a nutrition fact that nothing backs, on a
+ * page about a nutrition product.
  */
-const diavo = define<{ dishes: number[][]; corpus: { x: number; y: number; r: number }[] }>({
-  trail: 0.22,
+const diavo = define<{ splits: number[][] }>({
   init: (w, h) => {
     const rand = mulberry32(870);
-    const unit = Math.min(w, h);
-    const corpus: { x: number; y: number; r: number }[] = [];
-    for (let i = 0; i < scaled(w, h, 30, 110, 2200); i++) {
-      corpus.push({ x: rand() * w, y: rand() * h, r: unit * (0.003 + rand() * 0.004) });
-    }
-    // four dishes, each a normalised macro split
-    const dishes: number[][] = [];
-    for (let d = 0; d < 4; d++) {
-      const raw = MACROS.map((m) => m * (0.55 + rand() * 0.9));
-      const total = raw.reduce((s, x) => s + x, 0);
-      dishes.push(raw.map((x) => x / total));
-    }
-    return { dishes, corpus };
+    void w;
+    void h;
+    // a normalised macro split per dish
+    const splits = DISHES.map(() => {
+      const raw = MACROS.map(() => 0.2 + rand() * 0.8);
+      const total = raw.reduce((x, y) => x + y, 0);
+      return raw.map((x) => x / total);
+    });
+    return { splits };
   },
-  draw: ({ ctx, w, h, t, intro }, { dishes, corpus }) => {
+  draw: ({ ctx, w, h, t, intro }, { splits }) => {
     const a = ease(intro);
     const unit = Math.min(w, h);
-    const CYCLE = 4.6;
-    // normalised so the index is valid for any `t`, including a negative one:
-    // the engine clamps it too, but a program that crashes when handed an
-    // unexpected clock is a program that is wrong on its own terms
-    const n = dishes.length;
-    const which = n > 0 ? ((Math.floor(t / CYCLE) % n) + n) % n : 0;
-    const [stage, local] = phase(t % CYCLE, [0.9, 2.4, 1.3]);
-    const open = stage === 0 ? ease(local) : stage === 1 ? 1 : 1 - ease(local);
-    const vals = dishes[which] ?? [];
-    if (vals.length === 0) return;
+    const big = roomForLabels(w, h);
+    const pad = w * 0.04;
+    const innerW = w - pad * 2;
+    const innerH = h - pad * 2;
 
-    // the wider corpus, faint behind
-    for (const c of corpus) {
-      ctx.fillStyle = rgba(INK, 0.07 * a);
-      ctx.fillRect(c.x, c.y, c.r * 2, c.r * 2);
+    const CYCLE = 5.2;
+    const n = DISHES.length;
+    const which = ((Math.floor(t / CYCLE) % n) + n) % n;
+    const [stage, local] = phase(t % CYCLE, [1.1, 2.6, 1.5]);
+    // 0 bars fill, 1 hold, 2 clear for the next dish
+    const fill = stage === 0 ? ease(local) : stage === 1 ? 1 : 1 - ease(local);
+    const split = splits[which] ?? [0.5, 0.3, 0.2];
+    // rounding each share independently can total 101; the last one takes the
+    // remainder so the readout always adds up
+    const pct = split.map((v) => Math.round(v * 100));
+    pct[pct.length - 1] = 100 - pct.slice(0, -1).reduce((x, y) => x + y, 0);
+
+    /* ---- the screen ---- */
+    panel(ctx, pad, pad, innerW, innerH, unit * 0.05);
+    ctx.strokeStyle = rgba(INK, 0.14 * a);
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    const colX = pad + innerW * 0.06;
+    const colW = innerW * 0.88;
+
+    /* ---- the dish header ---- */
+    const headY = pad + innerH * 0.13;
+    if (big) {
+      label(ctx, DISHES[which].toUpperCase(), colX, headY, w, h, rgba(INK, 0.85 * a));
+    } else {
+      // a title bar stands in below the label threshold
+      ctx.fillStyle = rgba(INK, 0.6 * a);
+      ctx.fillRect(colX, headY - unit * 0.02, colW * 0.42, Math.max(4, unit * 0.04));
     }
+    gradientLine(
+      ctx,
+      colX,
+      headY + innerH * 0.1,
+      colX + colW,
+      headY + innerH * 0.1,
+      INK,
+      0.14 * a,
+      0.02 * a,
+      1,
+    );
 
-    const cx = w / 2;
-    const cy = h * 0.44;
-    const rOuter = unit * 0.3 * (0.35 + open * 0.65);
-    const rInner = rOuter * 0.52;
-
-    // the ring, split by proportion — filled wedges, not strokes.
-    // It rotates slowly and continuously: with a fixed start angle the whole
-    // canvas was static for the 2.4s hold in the middle of every cycle, which
-    // is the same defect that had to be fixed in the résumé and HILS panels.
-    let angle = -Math.PI / 2 + t * 0.11;
-    for (let i = 0; i < vals.length; i++) {
-      const sweep = vals[i] * Math.PI * 2 * open;
-      const shade = 1 - i / vals.length;
-      ctx.beginPath();
-      ctx.arc(cx, cy, rOuter, angle, angle + sweep);
-      ctx.arc(cx, cy, rInner, angle + sweep, angle, true);
-      ctx.closePath();
-      ctx.fillStyle = rgba(i === 0 ? ACCENT : i === 1 ? ACCENT_DEEP : INK, (0.18 + shade * 0.55) * a);
-      ctx.fill();
-      angle += sweep;
-    }
-
-    // the same split again as stacked bars, which reads better on a wide box
-    const barY = h * 0.86;
+    /* ---- macro bars ---- */
+    const barTop = pad + innerH * 0.34;
+    const barGap = innerH * 0.13;
     const barH = Math.max(6, unit * 0.07);
-    const barW = w * 0.72 * open;
-    let x = cx - barW / 2;
-    for (let i = 0; i < vals.length; i++) {
-      const seg = barW * vals[i];
-      const shade = 1 - i / vals.length;
-      ctx.fillStyle = rgba(i === 0 ? ACCENT : i === 1 ? ACCENT_DEEP : INK, (0.18 + shade * 0.55) * a);
-      ctx.fillRect(x, barY - barH / 2, Math.max(0, seg - unit * 0.006), barH);
-      x += seg;
+    const trackX = colX + (big ? colW * 0.22 : colW * 0.06);
+    const trackW = colX + colW - trackX;
+
+    for (let i = 0; i < MACROS.length; i++) {
+      const y = barTop + barGap * i;
+      if (big) {
+        label(ctx, MACROS[i], colX, y + barH / 2, w, h, rgba(INK, 0.4 * a));
+      }
+      // track
+      ctx.fillStyle = rgba(INK, 0.06 * a);
+      ctx.fillRect(trackX, y, trackW, barH);
+      // filled to this macro's share of the split
+      const value = split[i] * fill;
+      const tone = i === 0 ? ACCENT : i === 1 ? ACCENT_DEEP : INK;
+      const g = ctx.createLinearGradient(trackX, 0, trackX + trackW * value, 0);
+      g.addColorStop(0, rgba(tone, 0.45 * a));
+      g.addColorStop(1, rgba(tone, 0.9 * a));
+      ctx.fillStyle = g;
+      ctx.fillRect(trackX, y, trackW * value, barH);
+
+      if (big) {
+        label(
+          ctx,
+          `${Math.round(pct[i] * fill)}%`,
+          colX + colW,
+          y + barH / 2,
+          w,
+          h,
+          rgba(tone, 0.85 * a),
+          "right",
+        );
+      }
     }
 
-    // the dish itself at the centre of the ring
-    coreDot(ctx, cx, cy, unit * 0.035 * (1 - open * 0.35), ACCENT, 0.9 * a);
-    glowDot(ctx, cx, cy, unit * 0.09, ACCENT, 0.25 * a);
+    /* ---- micro nutrient rows ---- */
+    const microY = pad + innerH * 0.86;
+    const cellW = colW / MICROS.length;
+    for (let i = 0; i < MICROS.length; i++) {
+      const x = colX + cellW * i;
+      // they arrive after the macros, and breathe once settled so the hold is
+      // never perfectly still
+      const arrive = clamp01((fill - 0.55) / 0.45);
+      const breathe = 0.82 + 0.18 * Math.sin(t * 1.5 + i * 1.2);
+      if (big) {
+        label(ctx, MICROS[i], x, microY - unit * 0.055, w, h, rgba(INK, 0.32 * a * arrive));
+      }
+      const pipW = cellW * 0.7;
+      ctx.fillStyle = rgba(INK, 0.06 * a);
+      ctx.fillRect(x, microY, pipW, Math.max(3, unit * 0.028));
+      ctx.fillStyle = rgba(ACCENT, 0.55 * a * arrive * breathe);
+      ctx.fillRect(x, microY, pipW * (0.35 + i * 0.2) * arrive, Math.max(3, unit * 0.028));
+    }
   },
 });
 
