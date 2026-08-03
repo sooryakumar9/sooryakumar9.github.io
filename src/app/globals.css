@@ -306,6 +306,17 @@ html.lenis-active {
   animation: status-breathe 2.4s ease-in-out infinite;
 }
 
+/*
+ * The same dot, sized to sit on the header avatar. 7px reads as a speck
+ * against a 36px photo, and the ring is what lifts it off the image rather
+ * than letting it look like part of the picture.
+ */
+.status-dot--lg {
+  width: 10px;
+  height: 10px;
+  box-shadow: 0 0 0 2px var(--c-bg);
+}
+
 .status-dot::after {
   content: "";
   position: absolute;
@@ -514,6 +525,12 @@ html.lenis-active {
 
 .link-sweep:hover::after,
 .link-sweep:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* the route you are on keeps its underline drawn, which is the only thing the
+   reference header does that hover was not already doing */
+.link-sweep[aria-current]::after {
   transform: scaleX(1);
 }
 

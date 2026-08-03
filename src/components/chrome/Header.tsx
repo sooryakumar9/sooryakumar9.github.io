@@ -1,6 +1,7 @@
 "use client";
 
 import TransitionLink from "@/components/motion/TransitionLink";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Magnetic from "@/components/motion/Magnetic";
@@ -22,6 +23,9 @@ const MAX_W = 1360;
 
 /** Scroll movement below this is trackpad noise, not a direction. */
 const DEADZONE = 4;
+
+/** Breathing room between the name and the dots button when collapsed. */
+const DOTS_GAP = 18;
 
 /**
  * A floating capsule rather than a full width bar, so the hero canvas runs
@@ -47,6 +51,7 @@ export default function Header() {
   const headerRef = useRef<HTMLElement | null>(null);
   const pillRef = useRef<HTMLDivElement | null>(null);
   const brandRef = useRef<HTMLAnchorElement | null>(null);
+  const dotsRef = useRef<HTMLButtonElement | null>(null);
 
   // pointer and focus are tracked apart so that leaving with the mouse while a
   // link still holds focus does not release the bar
@@ -57,6 +62,7 @@ export default function Header() {
     const header = headerRef.current;
     const pill = pillRef.current;
     const brand = brandRef.current;
+    const dots = dotsRef.current;
     if (!header || !pill || !brand) return;
 
     const measure = () => {
@@ -69,9 +75,13 @@ export default function Header() {
         parseFloat(cs.borderLeftWidth) +
         parseFloat(cs.borderRightWidth);
 
+      // the dots button is absolutely positioned, so it never disturbs the
+      // expanded layout, but the collapsed bar has to leave room for it
+      const dotsW = dots ? dots.offsetWidth + DOTS_GAP : 0;
+
       setWidths({
         open: Math.min(MAX_W, header.clientWidth),
-        shut: Math.ceil(brand.offsetWidth + frame),
+        shut: Math.ceil(brand.offsetWidth + dotsW + frame),
       });
     };
 
@@ -115,18 +125,31 @@ export default function Header() {
     <header
       ref={headerRef}
       className="pointer-events-none fixed inset-x-0 top-3 z-70 px-3 md:top-5 md:px-6"
-      onPointerEnter={() => {
+      // Mouse only. `pointerenter` also fires on a tap, and a touch device may
+      // never send the matching `pointerleave`, which would pin the bar open
+      // for the rest of the session after a single stray tap.
+      onPointerEnter={(e) => {
+        if (e.pointerType !== "mouse") return;
         hovering.current = true;
         setCollapsed(false);
       }}
-      onPointerLeave={() => {
+      onPointerLeave={(e) => {
+        if (e.pointerType !== "mouse") return;
         hovering.current = false;
       }}
-      // focusin/focusout in React's synthetic form, so tabbing into the hidden
-      // nav is what reveals it. This is why the links are never `inert` or
-      // `visibility: hidden` when collapsed: they have to stay focusable for
-      // this to fire at all.
-      onFocus={() => {
+      /*
+       * focusin/focusout in React's synthetic form, so tabbing into the hidden
+       * nav is what reveals it. This is why the links are never `inert` or
+       * `visibility: hidden` when collapsed: they have to stay focusable for
+       * this to fire at all.
+       *
+       * Gated on `:focus-visible`, which is the difference between a keyboard
+       * user who needs the bar held open and a click or tap that happens to
+       * leave focus on a link. Without the gate, tapping any nav item pinned
+       * the bar open for the rest of the page visit.
+       */
+      onFocus={(e) => {
+        if (!(e.target instanceof Element) || !e.target.matches(":focus-visible")) return;
         focused.current = true;
         setCollapsed(false);
       }}
@@ -139,7 +162,7 @@ export default function Header() {
         ref={pillRef}
         // deliberately not `page-shell`: its 60px desktop gutter is a page
         // measure, and inside a pill it just pushes the contents to the middle
-        className={`rounded-chip pointer-events-auto mx-auto flex w-full max-w-[1360px] items-center justify-between gap-4 py-2.5 pr-2.5 pl-4 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:py-3 md:pr-3 md:pl-5 ${
+        className={`rounded-chip pointer-events-auto relative mx-auto flex w-full max-w-[1360px] items-center justify-between gap-4 py-2.5 pr-2.5 pl-4 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:py-3 md:pr-3 md:pl-5 ${
           lifted ? "border-line bg-bg/85 border backdrop-blur-xl" : "border border-transparent"
         }`}
         style={widths ? { maxWidth: collapsed ? widths.shut : widths.open } : undefined}
@@ -152,12 +175,29 @@ export default function Header() {
           className="group flex shrink-0 items-center gap-3"
           aria-label={`${profile.name}, home`}
         >
-          {/* monogram stands in for the avatar the design would otherwise use */}
-          <span
-            aria-hidden
-            className="border-line-strong text-accent grid h-8 w-8 shrink-0 place-items-center rounded-full border font-mono text-[11px] tracking-tight transition-colors group-hover:border-[var(--c-accent)]"
-          >
-            SK
+          {/*
+            The photo carries no alt text on purpose: the link around it is
+            already labelled "Soorya Kumar, home", so describing the image
+            again would announce the same person twice.
+          */}
+          <span className="relative block shrink-0">
+            <Image
+              src="/soorya-avatar.webp"
+              alt=""
+              width={128}
+              height={128}
+              priority
+              className="ring-line-strong h-9 w-9 rounded-full object-cover ring-1 transition-shadow group-hover:ring-[var(--c-accent)] md:h-10 md:w-10"
+            />
+            {/*
+              The dot is positioned by this wrapper rather than by itself:
+              `.status-dot` declares `position: relative` for its own ripple
+              pseudo element, and an `absolute` utility on the same element is
+              a coin toss on stylesheet order.
+            */}
+            <span aria-hidden className="absolute right-0 bottom-0 block">
+              <span className="status-dot status-dot--lg block" />
+            </span>
           </span>
           {/* the name is dropped below sm: at 390px the pill cannot hold the
               monogram, the name, the nav and the CTA without wrapping, and the
@@ -235,6 +275,27 @@ export default function Header() {
             </Magnetic>
           </nav>
         </div>
+
+        {/*
+          The collapsed bar's only control. Absolutely positioned so it takes
+          no part in the flex layout: the expanded bar is then untouched by it,
+          and it can still be measured while invisible, which is what the
+          collapsed width calculation needs.
+        */}
+        <button
+          ref={dotsRef}
+          type="button"
+          aria-label="Show navigation"
+          aria-expanded={!collapsed}
+          onClick={() => setCollapsed(false)}
+          className={`absolute top-1/2 right-2.5 flex -translate-y-1/2 items-center gap-1.5 rounded-full p-2 transition-opacity duration-300 md:right-3 ${
+            collapsed ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
+        >
+          {[0, 1, 2].map((i) => (
+            <span key={i} aria-hidden className="bg-accent block h-1.5 w-1.5 rounded-full" />
+          ))}
+        </button>
       </div>
     </header>
   );
