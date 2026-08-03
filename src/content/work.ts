@@ -16,7 +16,7 @@ export const projects: Project[] = [
     category: "systems",
     status: "shipped",
     signature: "hils",
-    period: "September — October 2025",
+    period: "September to October 2025",
     org: "Aeronautical Development Establishment · DRDO",
     role: "SDE Intern",
     tech: ["Python", "RT-LAB", "MATLAB"],
@@ -24,7 +24,7 @@ export const projects: Project[] = [
     sections: [
       {
         heading: "The situation",
-        body: "Hardware in the loop simulation at ADE ran on RT-LAB. Powerful software, operated entirely by hand. Every single test meant walking a model through load, build, execute, stop and reset, session after session, and the MATLAB scripts feeding it were managed the same way — carefully, manually, and slowly.",
+        body: "Hardware in the loop simulation at ADE ran on RT-LAB. Powerful software, operated entirely by hand. Every single test meant walking a model through load, build, execute, stop and reset, session after session, and the MATLAB scripts feeding it were managed the same way: carefully, manually, and slowly.",
       },
       {
         heading: "What I built",
@@ -32,7 +32,7 @@ export const projects: Project[] = [
       },
       {
         heading: "The interesting part",
-        body: "None of the infrastructure could change. The lab ran Python 2.6.4 and MATLAB R2012B, and RT-LAB itself was untouchable — I could drive it, but not modify it. So the whole thing had to be built with none of the modern conveniences, against a fixed runtime, and be reliable enough that an engineer would trust it with a real test. Script validation became the safety gate: a bad script fails in the browser, not in the lab.",
+        body: "None of the infrastructure could change. The lab ran Python 2.6.4 and MATLAB R2012B, and RT-LAB itself was untouchable. I could drive it, but not modify it. So the whole thing had to be built with none of the modern conveniences, against a fixed runtime, and be reliable enough that an engineer would trust it with a real test. Script validation became the safety gate: a bad script fails in the browser, not in the lab.",
       },
     ],
     constraints: [
@@ -52,7 +52,7 @@ export const projects: Project[] = [
     category: "applications",
     status: "shipped",
     signature: "rag",
-    period: "2025 — 2026",
+    period: "2025 to 2026",
     tech: ["Python", "LangChain", "FAISS", "OpenAI API", "Selenium"],
     sections: [
       {
@@ -65,7 +65,7 @@ export const projects: Project[] = [
       },
       {
         heading: "The interesting part",
-        body: "Analysis and discovery share one embedding space. That sounds like an implementation detail, but it's the whole point — it means the feedback you get and the matches you get agree with each other, because they're both reasoning over the same representation of you. Keeping Selenium alive against dynamic, obfuscated markup was the other half of the work.",
+        body: "Analysis and discovery share one embedding space. That sounds like an implementation detail, but it's the whole point. It means that the feedback you get and the matches you get agree with each other, because they're both reasoning over the same representation of you. Keeping Selenium alive against dynamic, obfuscated markup was the other half of the work.",
       },
     ],
     constraints: [
@@ -83,7 +83,7 @@ export const projects: Project[] = [
     category: "applications",
     status: "shipped",
     signature: "banking",
-    period: "2024 — 2025",
+    period: "2024 to 2025",
     tech: ["MongoDB", "Express.js", "React.js", "Node.js"],
     sections: [
       {
@@ -114,7 +114,7 @@ export const projects: Project[] = [
     category: "systems",
     status: "shipped",
     signature: "qsecure",
-    period: "2023 — 2024",
+    period: "2023 to 2024",
     tech: ["Python", "JavaScript", "Flask"],
     sections: [
       {
@@ -123,7 +123,7 @@ export const projects: Project[] = [
       },
       {
         heading: "What I built",
-        body: "A working messenger — Python service, browser client — where keys are established with quantum resistant methods instead of RSA, so recorded traffic stays noise even to a future quantum adversary. I deliberately kept the classical path in as a control group, so you can see side by side exactly what an interceptor gets on each kind of channel.",
+        body: "A working messenger, a Python service with a browser client, where keys are established with quantum resistant methods instead of RSA, so recorded traffic stays noise even to a future quantum adversary. I deliberately kept the classical path in as a control group, so you can see side by side exactly what an interceptor gets on each kind of channel.",
       },
       {
         heading: "The interesting part",
@@ -145,7 +145,7 @@ export const projects: Project[] = [
     category: "systems",
     status: "shipped",
     signature: "blocker",
-    period: "2022 — 2023",
+    period: "2022 to 2023",
     tech: ["Python", "Tkinter"],
     sections: [
       {
@@ -176,7 +176,7 @@ export const projects: Project[] = [
     category: "applications",
     status: "shipped",
     signature: "madhumarga",
-    period: "February — June 2026",
+    period: "February to June 2026",
     org: "MindMatrix",
     role: "Android Development Intern",
     tech: [
@@ -201,7 +201,7 @@ export const projects: Project[] = [
       },
       {
         heading: "The interesting part",
-        body: "The Hive Doctor. It's a decision support engine built on explicit rules, not a trained model — it evaluates structured observations and returns a colony health score, a risk classification, a diagnosis and recommended actions. That was a deliberate choice. When you're telling someone something might be wrong with their colony, being able to point at the exact rule that fired matters more than being clever.",
+        body: "The Hive Doctor. It's a decision support engine built on explicit rules, not a trained model. It evaluates structured observations and returns a colony health score, a risk classification, a diagnosis and recommended actions. That was a deliberate choice. When you're telling someone something might be wrong with their colony, being able to point at the exact rule that fired matters more than being clever.",
       },
     ],
     constraints: [
@@ -219,7 +219,7 @@ export const projects: Project[] = [
     category: "progress",
     status: "building",
     signature: "zenpro",
-    period: "2026 — ongoing",
+    period: "2026, ongoing",
     tech: ["Next.js", "TypeScript", "Supabase", "PostgreSQL", "Redis"],
     live: "https://zenpro-news.vercel.app/",
     sections: [
@@ -269,7 +269,7 @@ export const projects: Project[] = [
     category: "progress",
     status: "building",
     signature: "diavo",
-    period: "2026 — ongoing",
+    period: "2026, ongoing",
     tech: [
       "Next.js 16",
       "React 19",

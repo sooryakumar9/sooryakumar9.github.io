@@ -40,7 +40,7 @@ export const architectures: Record<string, Architecture> = {
       },
       {
         title: "The web app issues the full RT-LAB sequence",
-        body: "Load, build, execute, stop and reset — the six step procedure an engineer used to walk through becomes one request.",
+        body: "Load, build, execute, stop and reset. The five step procedure an engineer used to walk through becomes one request.",
         nodes: ["app", "rtlab"],
       },
       {
@@ -161,7 +161,7 @@ export const architectures: Record<string, Architecture> = {
     steps: [
       {
         title: "Quantum resistant key exchange replaces the RSA handshake",
-        body: "The same place in the flow, a different primitive — so recorded traffic stays noise even to a future quantum adversary.",
+        body: "The same place in the flow, a different primitive, so recorded traffic stays noise even to a future quantum adversary.",
         nodes: ["client", "pq"],
       },
       {
@@ -250,7 +250,7 @@ export const architectures: Record<string, Architecture> = {
       },
       {
         title: "A score, a risk band, a diagnosis, an action",
-        body: "The engine returns colony health, a risk classification and recommended actions — and you can point at the rule that produced each one.",
+        body: "The engine returns colony health, a risk classification and recommended actions, and you can point at the rule that produced each one.",
         nodes: ["rules", "out"],
       },
     ],

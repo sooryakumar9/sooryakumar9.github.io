@@ -74,7 +74,7 @@ export default function CipherChannels() {
         What an interceptor holds
       </h2>
       <p className="text-muted mb-6 text-sm">
-        An illustration of harvest now, decrypt later — not the project&rsquo;s actual key
+        An illustration of harvest now, decrypt later. Not the project&rsquo;s actual key
         exchange. No cryptography is running here; this shows the shape of the argument.
       </p>
 

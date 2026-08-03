@@ -92,10 +92,19 @@ export default function RootLayout({
           Runs before first paint, so the opening panel is either already
           hidden or already on screen — never swapped after the fact. Doing
           this in React would mean a frame of the wrong state.
+
+          The gate is a timestamp on a five minute window, not a once-per-visit
+          flag: refreshing during a session stays quiet, coming back later gets
+          the full opening. It lives in localStorage rather than sessionStorage
+          because a window that resets every time a tab opens is not a window —
+          a new tab thirty seconds later would replay it.
+
+          The stamp is written only when the intro actually plays, so a run of
+          refreshes inside the window cannot keep pushing the next one away.
         */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var d=document.documentElement;try{var skip=sessionStorage.getItem("sk-intro-played")!==null||matchMedia("(prefers-reduced-motion: reduce)").matches;if(skip){d.dataset.intro="skip";d.dataset.introDone="true"}else{sessionStorage.setItem("sk-intro-played","1")}}catch(e){d.dataset.intro="skip";d.dataset.introDone="true"}})();`,
+            __html: `(function(){var d=document.documentElement;try{var n=Date.now(),k="sk-intro-at",last=parseInt(localStorage.getItem(k)||"0",10)||0;var skip=n-last<300000||matchMedia("(prefers-reduced-motion: reduce)").matches;if(skip){d.dataset.intro="skip";d.dataset.introDone="true"}else{localStorage.setItem(k,String(n))}}catch(e){d.dataset.intro="skip";d.dataset.introDone="true"}})();`,
           }}
         />
         {/* without scripting the panel could never lift, so never show it */}

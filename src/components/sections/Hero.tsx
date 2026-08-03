@@ -199,7 +199,7 @@ export default function Hero() {
             <span aria-hidden className="status-dot shrink-0" />
             Available for work
           </span>
-          <span>— {profile.location}</span>
+          <span>in {profile.location}</span>
         </p>
 
         {/* the accessible name stays the real name no matter what the

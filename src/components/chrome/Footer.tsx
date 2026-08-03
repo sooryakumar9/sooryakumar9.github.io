@@ -59,7 +59,7 @@ export default function Footer() {
           </a>
           <p className="text-muted mt-3 flex items-center gap-2 text-sm">
             <span aria-hidden className="status-dot" />
-            Available for work — {profile.location}
+            Available for work in {profile.location}
           </p>
         </div>
       </div>

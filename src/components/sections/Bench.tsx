@@ -21,8 +21,8 @@ export default function Bench() {
             Two products I&rsquo;m building right now
           </h2>
           <p className="text-muted mt-5 max-w-2xl">
-            Both are live and both are mine end to end — schema, auth, search,
-            interface, deploy. Here is exactly how far each one has got.
+            Both are live and both are mine end to end, from schema and auth
+            through search, interface and deploy. Here is exactly how far each one has got.
           </p>
         </div>
       </Reveal>

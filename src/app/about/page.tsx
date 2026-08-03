@@ -39,7 +39,7 @@ export default function AboutPage() {
 
           <Reveal delay={0.08}>
             <h1 className="display mb-6 max-w-4xl text-5xl md:text-8xl">
-              Hey — thanks for scrolling this far
+              Hey, thanks for scrolling this far
             </h1>
           </Reveal>
 
@@ -63,7 +63,7 @@ export default function AboutPage() {
                 <h2 className="eyebrow mb-2">Currently</h2>
                 <p className="text-muted flex items-center gap-2 text-sm">
                   <span aria-hidden className="status-dot" />
-                  Available for work — {profile.location}
+                  Available for work in {profile.location}
                 </p>
                 <a
                   href={profile.resume}

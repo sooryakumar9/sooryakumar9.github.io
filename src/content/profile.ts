@@ -18,7 +18,7 @@ export const profile = {
     degree: "B.E. Computer Science and Engineering",
     school: "JSS Academy of Technical Education",
     place: "Bengaluru",
-    period: "October 2022 — June 2026",
+    period: "October 2022 to June 2026",
     cgpa: "8.69",
   },
 } as const;
@@ -56,7 +56,7 @@ export const audiences = [
   {
     id: "anyone",
     label: "For anyone",
-    body: "I'm Soorya, a full stack developer in Bengaluru. I like knowing what happens after the click — how an interface talks to its API, how the data gets shaped and stored, and where a rule engine or a retrieval pipeline quietly earns its keep. So I build across all of those layers rather than picking one.",
+    body: "I'm Soorya, a full stack developer in Bengaluru. I like knowing what happens after the click. How an interface talks to its API, how the data gets shaped and stored, and where a rule engine or a retrieval pipeline quietly earns its keep. So I build across all of those layers rather than picking one.",
   },
   {
     id: "recruiters",
@@ -71,7 +71,7 @@ export const audiences = [
   {
     id: "founders",
     label: "Founders",
-    body: "I can take something from a blank repo to a deployed product on my own. ZenPro and Diavo are both live and both mine end to end — schema, auth, search, UI, deploy. If you need one person who can hold the whole system in their head and still ship, that's the part I'm good at.",
+    body: "I can take something from a blank repo to a deployed product on my own. ZenPro and Diavo are both live and both mine end to end, from schema and auth through search, UI and deploy. If you need one person who can hold the whole system in their head and still ship, that's the part I'm good at.",
   },
 ] as const;
 

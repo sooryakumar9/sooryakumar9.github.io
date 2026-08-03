@@ -171,7 +171,7 @@ const banking = define<{ face: Pt[]; rows: number[] }>({
     const rowH = Math.max(9, unit * 0.1);
     const gapY = rowH * 1.35;
 
-    const field = (i: number, labelText: string, fill: number) => {
+    const field = (i: number, labelText: string, fill: number, caret: boolean) => {
       const y = formY + gapY * i;
       panel(ctx, formX, y, formW, rowH, rowH * 0.28);
       ctx.fillStyle = rgba(INK, 0.05 * a);
@@ -185,19 +185,38 @@ const banking = define<{ face: Pt[]; rows: number[] }>({
       // the entered value
       ctx.fillStyle = rgba(INK, 0.55 * a);
       const vx = formX + formW * (big ? 0.34 : 0.1);
-      ctx.fillRect(vx, y + rowH * 0.34, (formW - (vx - formX)) * 0.8 * fill, rowH * 0.32);
+      const runW = (formW - (vx - formX)) * 0.8;
+      ctx.fillRect(vx, y + rowH * 0.34, runW * fill, rowH * 0.32);
+
+      /*
+       * The caret. It is what a compose form does while it waits for you, and
+       * it is also the only thing moving between the last character being
+       * typed and the confirm landing — a stretch of about a second in which
+       * the whole canvas was previously frozen. Its alpha is a sine rather
+       * than an on/off blink so that no two frames are ever identical.
+       */
+      if (caret) {
+        const cx = vx + runW * fill + Math.max(1.5, unit * 0.007);
+        ctx.fillStyle = rgba(ACCENT, (0.3 + 0.55 * (0.5 + 0.5 * Math.sin(t * 6))) * a);
+        ctx.fillRect(cx, y + rowH * 0.28, Math.max(1.5, unit * 0.009), rowH * 0.44);
+      }
     };
 
-    // the fields fill in over the compose beat
-    field(0, "TO", stage === 0 ? clamp01(local * 2.4) : 1);
-    field(1, "AMOUNT", stage === 0 ? clamp01(local * 2.4 - 1) : 1);
+    // the fields fill in over the compose beat, and the caret sits in whichever
+    // one is being typed, then rests in the amount until the transfer is sent
+    const onFirstField = stage === 0 && local * 2.4 <= 1;
+    field(0, "TO", stage === 0 ? clamp01(local * 2.4) : 1, onFirstField);
+    field(1, "AMOUNT", stage === 0 ? clamp01(local * 2.4 - 1) : 1, stage <= 1 && !onFirstField);
 
     /* ---- confirm ---- */
     const btnY = formY + gapY * 2;
+    // breathes while it is the next thing to do, which keeps the confirm beat
+    // alive: nothing else on the panel moves during it
+    const waiting = stage <= 1 ? 0.5 + 0.5 * Math.sin(t * 3.1) : 0;
     panel(ctx, formX, btnY, formW * 0.52, rowH, rowH * 0.5);
-    ctx.fillStyle = rgba(ACCENT, (confirmed ? 0.28 : 0.1) * a);
+    ctx.fillStyle = rgba(ACCENT, ((confirmed ? 0.28 : 0.1) + 0.07 * waiting) * a);
     ctx.fill();
-    ctx.strokeStyle = rgba(ACCENT, (confirmed ? 0.9 : 0.4) * a);
+    ctx.strokeStyle = rgba(ACCENT, ((confirmed ? 0.9 : 0.4) + 0.2 * waiting) * a);
     ctx.lineWidth = confirmed ? 1.6 : 1;
     ctx.stroke();
     if (big) {
@@ -482,8 +501,17 @@ const madhumarga = define<{ cells: Cell[]; r: number; origin: number; flagged: n
     const src = cells[origin];
     const tgt = cells[flagged];
     const maxD = Math.hypot(w, h);
-    const wave = local * maxD * 1.1;
     const front = r * 0.9;
+
+    /*
+     * The sweep is scaled to the hive field, not to the canvas diagonal. Doing
+     * it the other way sent the front past the outermost hive with a third of
+     * the beat still to run, and since nothing else moves during that beat the
+     * canvas held for about 300ms every cycle.
+     */
+    let reach = 0;
+    for (const c of cells) reach = Math.max(reach, Math.hypot(c.x - src.x, c.y - src.y));
+    const wave = local * (reach + front * 2);
 
     const hex = (c: Cell, fill: string, stroke: string, lw: number) => {
       ctx.beginPath();
@@ -501,6 +529,20 @@ const madhumarga = define<{ cells: Cell[]; r: number; origin: number; flagged: n
       ctx.lineWidth = lw;
       ctx.stroke();
     };
+
+    /*
+     * The alert sweep, drawn as itself rather than only as the hives it
+     * happens to be crossing. The hives sit at discrete distances, so whenever
+     * the front was between two rings nothing was lit and the canvas held a
+     * frame — reproducibly, at the same moment of every cycle.
+     */
+    if (stage === 1) {
+      ctx.beginPath();
+      ctx.arc(src.x, src.y, wave, 0, Math.PI * 2);
+      ctx.strokeStyle = rgba(ACCENT, 0.16 * a * (1 - local * 0.5));
+      ctx.lineWidth = Math.max(1, r * 0.09);
+      ctx.stroke();
+    }
 
     for (const c of cells) {
       const d = Math.hypot(c.x - src.x, c.y - src.y);

@@ -49,7 +49,10 @@ export default function Preloader() {
         ease: "power2.inOut",
         onUpdate: () => {
           const v = Math.round(counter.v);
-          if (countRef.current) countRef.current.textContent = String(v).padStart(3, "0");
+          // unpadded: the number widens from one digit to three as it climbs,
+          // and since it is the left item of a `justify-between` row it grows
+          // into the empty middle. The word block on the right stays pinned.
+          if (countRef.current) countRef.current.textContent = String(v);
           // the word steps with the count rather than on its own timer, so the
           // two never drift out of sync
           if (wordRef.current) {
@@ -95,7 +98,7 @@ export default function Preloader() {
               className="pre-line display text-fg leading-none"
               style={{ fontSize: "clamp(56px, 13vw, 190px)" }}
             >
-              <span ref={countRef}>000</span>
+              <span ref={countRef}>0</span>
               <span className="text-accent align-super text-[0.4em]">%</span>
             </p>
           </div>

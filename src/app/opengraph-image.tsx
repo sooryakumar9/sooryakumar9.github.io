@@ -26,7 +26,7 @@ export default function OpengraphImage() {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 22, color: "#5eead4" }}>
           <div style={{ width: 12, height: 12, borderRadius: 999, background: "#5eead4" }} />
-          Available for work — {profile.location}
+          Available for work in {profile.location}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column" }}>
