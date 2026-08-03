@@ -1,5 +1,5 @@
 import { ACCENT, ACCENT_DEEP, INK, clamp01, ease, mulberry32, rgba } from "../types";
-import { define } from "./shared";
+import { define, label, labelPx, roomForLabels } from "./shared";
 
 /* ------------------------------------------------------------------ hero --- */
 
@@ -45,203 +45,345 @@ const hero = define<{ blobs: { x: number; y: number; r: number; sx: number; sy: 
   },
 });
 
+/* ---------------------------------------------------------------- shared --- */
+
+/** Rounded rectangle path, used by both panels. */
+function panel(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
+}
+
 /* ------------------------------------------------------------------ hils --- */
 
-const STEPS = 5;
+const CONTROLS = ["LOAD", "BUILD", "EXEC", "STOP", "RESET"];
+const LOG = [
+  "model loaded",
+  "syntax ok",
+  "build complete",
+  "executing",
+  "run finished",
+];
 
 /**
- * What the DRDO work actually replaced, shown as a race.
+ * The control panel Soorya built, running a job.
  *
- * The upper track is the lab run as it was done by hand: step, wait, step,
- * wait — long uneven pauses while an engineer walks the model through load,
- * build, execute, stop and reset. The lower track is the same five steps
- * driven by the web layer, firing in one continuous sweep.
+ * A script list down the left, the five RT-LAB controls across the top firing
+ * in order, and a status log filling in underneath as each step completes —
+ * ending green, holding, then clearing and running again.
  *
- * Both start together, so the gap between the two bars when the automated run
- * has finished *is* the roughly 70 percent that disappeared. Nothing is
- * labelled; the difference in length says it.
+ * Earlier versions of this canvas were abstractions of the project (a
+ * flowchart, an attractor, two racing bars) and every one of them needed a
+ * caption to mean anything. This just draws the software.
  */
-const hils = define<{ waits: number[] }>({
-  trail: 0.5,
-  init: () => {
-    const rand = mulberry32(70);
-    // uneven human pauses, which is what makes the top track read as manual
-    return { waits: Array.from({ length: STEPS }, () => 0.6 + rand() * 0.9) };
+const hils = define<{ scripts: number[] }>({
+  init: (w, h) => {
+    const rand = mulberry32(1104);
+    void w;
+    void h;
+    // varying script name lengths, so the list reads as real content
+    return { scripts: Array.from({ length: 7 }, () => 0.45 + rand() * 0.5) };
   },
-  draw: ({ ctx, w, h, t, intro }, { waits }) => {
+  draw: ({ ctx, w, h, t, intro }, { scripts }) => {
     const a = ease(intro);
     const unit = Math.min(w, h);
+    const big = roomForLabels(w, h);
+    const pad = w * 0.045;
 
+    // one control per beat, then a hold on the finished state
     const CYCLE = 9;
     const local = (t % CYCLE) / CYCLE;
+    // the run occupies the first 78% of the cycle; the rest is the held
+    // finished state, so the panel is never caught mid-nothing
+    const runP = clamp01(local / 0.78) * CONTROLS.length;
+    const active = Math.min(CONTROLS.length, Math.floor(runP));
+    const stepP = clamp01(runP - active);
+    const done = active >= CONTROLS.length;
 
-    const padX = w * 0.08;
-    const trackW = w - padX * 2;
-    const barH = Math.max(6, unit * 0.075);
-    const yTop = h * 0.34;
-    const yBot = h * 0.64;
+    /* ---- the window itself ---- */
+    ctx.lineWidth = 1;
+    panel(ctx, pad, pad, w - pad * 2, h - pad * 2, unit * 0.05);
+    ctx.strokeStyle = rgba(INK, 0.14 * a);
+    ctx.stroke();
 
-    // the automated run occupies the first 28% of the cycle, the manual run
-    // nearly all of it — that ratio is the saving
-    const autoP = clamp01(local / 0.28);
-    const totalWait = waits.reduce((s, x) => s + x, 0);
-    const manualP = clamp01(local / 0.92);
+    const railW = (w - pad * 2) * 0.26;
+    const railX = pad;
+    const bodyX = pad + railW;
+    const bodyW = w - pad * 2 - railW;
 
-    const drawTrack = (y: number, progress: number, hot: boolean, working = -1) => {
-      ctx.fillStyle = rgba(INK, 0.06 * a);
-      ctx.fillRect(padX, y - barH / 2, trackW, barH);
+    /* ---- script list down the left ---- */
+    ctx.save();
+    panel(ctx, railX, pad, railW, h - pad * 2, unit * 0.05);
+    ctx.clip();
+    ctx.fillStyle = rgba(INK, 0.03 * a);
+    ctx.fillRect(railX, pad, railW, h - pad * 2);
 
-      const filled = trackW * progress;
-      if (filled > 0.5) {
-        const g = ctx.createLinearGradient(padX, 0, padX + filled, 0);
-        g.addColorStop(0, rgba(hot ? ACCENT : INK, (hot ? 0.5 : 0.22) * a));
-        g.addColorStop(1, rgba(hot ? ACCENT : INK, (hot ? 0.95 : 0.4) * a));
-        ctx.fillStyle = g;
-        ctx.fillRect(padX, y - barH / 2, filled, barH);
-      }
+    const rowH = (h - pad * 2) / (scripts.length + 1.4);
+    scripts.forEach((len, i) => {
+      const y = pad + rowH * (i + 0.9);
+      // the script currently being driven is the one that lights
+      const on = i === active % scripts.length && !done;
+      ctx.fillStyle = rgba(on ? ACCENT : INK, (on ? 0.85 : 0.22) * a);
+      ctx.fillRect(
+        railX + railW * 0.14,
+        y - rowH * 0.17,
+        railW * 0.72 * len,
+        Math.max(2, rowH * 0.34),
+      );
+    });
+    ctx.restore();
 
-      // the segment currently being worked, so a waiting manual run reads as
-      // occupied rather than broken
-      if (working >= 0) {
-        const segW = trackW / STEPS;
-        const pulse = 0.5 + 0.5 * Math.sin(t * 4);
-        ctx.fillStyle = rgba(INK, (0.05 + pulse * 0.1) * a);
-        ctx.fillRect(padX + segW * working, y - barH / 2, segW, barH);
-      }
+    // divider between rail and body
+    ctx.strokeStyle = rgba(INK, 0.1 * a);
+    ctx.beginPath();
+    ctx.moveTo(bodyX, pad);
+    ctx.lineTo(bodyX, h - pad);
+    ctx.stroke();
 
-      for (let i = 0; i <= STEPS; i++) {
-        const x = padX + (trackW * i) / STEPS;
-        const passed = progress >= i / STEPS - 0.001;
-        ctx.fillStyle = rgba(passed ? (hot ? ACCENT : INK) : INK, (passed ? 0.9 : 0.16) * a);
-        const mw = Math.max(1.5, unit * 0.012);
-        ctx.fillRect(x - mw / 2, y - barH * 0.95, mw, barH * 1.9);
-      }
+    /* ---- the five controls across the top ---- */
+    const ctlY = pad + (h - pad * 2) * 0.16;
+    const ctlH = Math.max(9, unit * 0.13);
+    const gap = bodyW * 0.03;
+    const ctlW = (bodyW - gap * (CONTROLS.length + 1)) / CONTROLS.length;
 
-      if (progress > 0 && progress < 1) {
-        const x = padX + filled;
-        const g = ctx.createRadialGradient(x, y, 0, x, y, barH * 2.2);
-        g.addColorStop(0, rgba(hot ? ACCENT : INK, 0.55 * a));
-        g.addColorStop(1, rgba(hot ? ACCENT : INK, 0));
-        ctx.fillStyle = g;
-        ctx.fillRect(x - barH * 2.2, y - barH * 2.2, barH * 4.4, barH * 4.4);
-      }
-    };
+    for (let i = 0; i < CONTROLS.length; i++) {
+      const x = bodyX + gap * (i + 1) + ctlW * i;
+      const isDone = i < active;
+      const isNow = i === active && !done;
 
-    // manual: advance only while a step is being performed, hold otherwise
-    let manualProgress = 0;
-    let manualWorking = -1;
-    {
-      const walked = manualP * totalWait;
-      let acc = 0;
-      for (let i = 0; i < STEPS; i++) {
-        const seg = waits[i];
-        if (walked >= acc + seg) {
-          manualProgress = (i + 1) / STEPS;
-          acc += seg;
-          continue;
-        }
-        // most of each segment is spent waiting, then the step happens
-        const within = (walked - acc) / seg;
-        manualProgress = (i + clamp01((within - 0.62) / 0.38)) / STEPS;
-        manualWorking = i;
-        break;
-      }
-    }
-
-    drawTrack(yTop, manualProgress, false, manualWorking);
-    drawTrack(yBot, ease(autoP), true);
-
-    // once the automated run is done, the distance still left on the manual
-    // track is the time that was saved
-    if (autoP >= 1 && manualProgress < 1) {
-      const x1 = padX + trackW * 1;
-      const x2 = padX + trackW * manualProgress;
-      const midY = (yTop + yBot) / 2;
-      ctx.strokeStyle = rgba(ACCENT_DEEP, 0.5 * a);
-      ctx.lineWidth = 1;
-      ctx.setLineDash([3, 4]);
-      ctx.beginPath();
-      ctx.moveTo(x2, midY);
-      ctx.lineTo(x1, midY);
+      panel(ctx, x, ctlY - ctlH / 2, ctlW, ctlH, ctlH / 2);
+      ctx.fillStyle = rgba(isNow ? ACCENT : isDone ? ACCENT : INK, (isNow ? 0.3 : isDone ? 0.14 : 0.05) * a);
+      ctx.fill();
+      ctx.strokeStyle = rgba(isNow || isDone ? ACCENT : INK, (isNow ? 0.95 : isDone ? 0.5 : 0.18) * a);
+      ctx.lineWidth = isNow ? 1.6 : 1;
       ctx.stroke();
-      ctx.setLineDash([]);
+
+      if (big) {
+        label(
+          ctx,
+          CONTROLS[i],
+          x + ctlW / 2,
+          ctlY,
+          w,
+          h,
+          rgba(isNow || isDone ? ACCENT : INK, (isNow ? 1 : isDone ? 0.7 : 0.35) * a),
+          "center",
+        );
+      } else {
+        // small: a filled pill instead of a label it could not render legibly
+        const dotR = Math.max(1.5, ctlH * 0.16);
+        ctx.beginPath();
+        ctx.arc(x + ctlW / 2, ctlY, dotR, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(isNow || isDone ? ACCENT : INK, (isNow ? 1 : isDone ? 0.6 : 0.25) * a);
+        ctx.fill();
+      }
     }
+
+    /* ---- the status log ---- */
+    const logTop = ctlY + ctlH * 1.5;
+    const logH = h - pad - logTop;
+    const lineH = logH / (LOG.length + 0.6);
+    const fs = big ? labelPx(w, h) : 0;
+
+    for (let i = 0; i < LOG.length; i++) {
+      if (i > active) break;
+      const y = logTop + lineH * (i + 0.6);
+      const settled = i < active;
+      const tone = done && i === LOG.length - 1 ? ACCENT : settled ? INK : ACCENT;
+      const alpha = (settled ? 0.55 : 0.95) * a;
+
+      // the caret marker on every line
+      ctx.fillStyle = rgba(tone, alpha);
+      const cw = Math.max(2, unit * 0.014);
+      ctx.fillRect(bodyX + bodyW * 0.05, y - cw / 2, cw, cw);
+
+      if (big) {
+        ctx.font = `${fs.toFixed(1)}px ui-monospace, monospace`;
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = rgba(tone, alpha);
+        const text = LOG[i];
+        // the newest line types itself out
+        // the newest line types out across its own step, not on a free timer
+        const shown = settled ? text : text.slice(0, Math.ceil(text.length * clamp01(stepP * 1.6)));
+        ctx.fillText(shown, bodyX + bodyW * 0.05 + cw * 2.4, y);
+      } else {
+        // small: a bar standing in for the line of text
+        const barW = bodyW * (0.32 + ((i * 37) % 11) / 24);
+        ctx.fillStyle = rgba(tone, alpha * 0.8);
+        ctx.fillRect(
+          bodyX + bodyW * 0.05 + cw * 2.4,
+          y - Math.max(1.5, lineH * 0.14),
+          settled ? barW : barW * clamp01(stepP * 1.6),
+          Math.max(3, lineH * 0.28),
+        );
+      }
+    }
+
+    /* ---- the run indicator ----
+       bottom right of the window: the control row already spans the full body
+       width, so anything at the top right lands on top of RESET */
+    const dotR = Math.max(2.5, unit * 0.018);
+    const dotX = w - pad * 1.8 - dotR;
+    const dotY = h - pad * 1.8 - dotR;
+    // it keeps breathing when finished too: a constant dot meant the whole
+    // canvas held perfectly still for the last fifth of every cycle
+    const pulse = done ? 0.72 + 0.28 * Math.sin(t * 1.6) : 0.5 + 0.5 * Math.sin(t * 5);
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, dotR, 0, Math.PI * 2);
+    ctx.fillStyle = rgba(done ? ACCENT : ACCENT_DEEP, (0.4 + pulse * 0.6) * a);
+    ctx.fill();
   },
 });
 
 /* ------------------------------------------------------------------- rag --- */
 
+type Job = { seed: number; target: number; score: number; y: number };
+
 /**
- * The ranking rearranging itself.
+ * The analyser's own interface.
  *
- * A dense grid where every row is one opening and every cell along it is one
- * dimension of similarity against the résumé. Scores drift, so the rows
- * continuously re-sort into rank order — the strongest match rises to the top
- * and holds until something displaces it.
- *
- * A wall of data rather than a few floating points, which is both closer to
- * what a retrieval pipeline produces and legible at any size.
+ * The résumé sits on the left and its lines light up as they are read; on the
+ * right, job cards stack up with match percentages that count toward their
+ * score, and the stack re-sorts as the numbers resolve. What goes in and what
+ * comes out are both visible, so the picture explains itself.
  */
-type Row = { seed: number; speed: number; y: number };
-
-const rag = define<{ rows: Row[]; cols: number }>({
-  // no trail: the rows slide between rank slots, and a wake turns that into
-  // smeared ghosts rather than movement
-  trail: 0,
+const rag = define<{ jobs: Job[]; lines: number[] }>({
   init: (w, h) => {
-    const rand = mulberry32(917);
-    const rowCount = Math.max(5, Math.min(11, Math.round(h / Math.max(16, h * 0.105))));
-    const rows: Row[] = [];
-    for (let i = 0; i < rowCount; i++) {
-      rows.push({ seed: rand() * 10, speed: 0.1 + rand() * 0.18, y: i });
+    const rand = mulberry32(2211);
+    const count = h > 260 ? 5 : 4;
+    const jobs: Job[] = [];
+    for (let i = 0; i < count; i++) {
+      jobs.push({ seed: rand(), target: 0, score: 0, y: i });
     }
-    const cols = Math.max(8, Math.min(26, Math.round(w / Math.max(18, w * 0.045))));
-    return { rows, cols };
+    const lines = Array.from({ length: 9 }, () => 0.4 + rand() * 0.6);
+    void w;
+    return { jobs, lines };
   },
-  draw: ({ ctx, w, h, t, intro }, { rows, cols }) => {
+  draw: ({ ctx, w, h, t, intro }, { jobs, lines }) => {
     const a = ease(intro);
-    const padX = w * 0.07;
-    const padY = h * 0.1;
-    const gridW = w - padX * 2;
-    const gridH = h - padY * 2;
-    const rowH = gridH / rows.length;
-    const cellW = gridW / cols;
-    const gap = Math.max(1, cellW * 0.14);
+    const unit = Math.min(w, h);
+    const big = roomForLabels(w, h);
+    const pad = w * 0.045;
 
-    const scored = rows.map((r, i) => ({
-      i,
-      r,
-      score: 0.5 + 0.5 * Math.sin(t * r.speed + r.seed),
-    }));
-    const order = [...scored].sort((p, q) => q.score - p.score);
+    /*
+     * Both of these run continuously rather than on a cycle with a hold.
+     * An earlier version settled the scores and then stopped for the back
+     * half of every loop, which left the canvas genuinely frozen for seconds
+     * at a time — indistinguishable from a broken animation.
+     */
+    // the read head sweeps the document over and over
+    const read = (t / 4.6) % 1;
 
-    // ease each row toward its rank slot, so re-sorting is a slide not a jump
-    order.forEach((entry, rank) => {
-      entry.r.y += (rank - entry.r.y) * 0.05;
+    // targets drift on their own slow cycles, so the bars always move a
+    // little and the ranking reshuffles from time to time
+    for (let i = 0; i < jobs.length; i++) {
+      const j = jobs[i];
+      j.target = 0.45 + 0.5 * (0.5 + 0.5 * Math.sin(t * 0.26 + j.seed * 11 + i));
+    }
+
+    const docW = (w - pad * 2) * 0.33;
+    const docX = pad;
+    const listX = pad + docW + (w - pad * 2) * 0.08;
+    const listW = w - pad - listX;
+
+    /* ---- the résumé ---- */
+    panel(ctx, docX, pad, docW, h - pad * 2, unit * 0.04);
+    ctx.fillStyle = rgba(INK, 0.035 * a);
+    ctx.fill();
+    ctx.strokeStyle = rgba(INK, 0.14 * a);
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    const lineGap = (h - pad * 2) / (lines.length + 2);
+    lines.forEach((len, i) => {
+      const y = pad + lineGap * (i + 1.4);
+      // the read head passes down the page, lighting each line as it goes
+      const lit = read > i / lines.length;
+      const hot = Math.abs(read * lines.length - i) < 0.8 && read < 1;
+      ctx.fillStyle = rgba(hot ? ACCENT : INK, (hot ? 0.95 : lit ? 0.4 : 0.16) * a);
+      ctx.fillRect(
+        docX + docW * 0.12,
+        y - Math.max(1.5, lineGap * 0.14),
+        docW * 0.76 * len,
+        Math.max(3, lineGap * 0.28),
+      );
     });
 
-    const leader = order[0].i;
+    /* ---- the ranked job cards ---- */
+    const ranked = [...jobs].sort((p, q) => q.target - p.target);
+    ranked.forEach((j, rank) => {
+      j.y += (rank - j.y) * 0.08;
+      // always easing toward the current target rather than being gated on a
+      // phase: gating meant the cards read 0% for a third of every cycle,
+      // which looks broken rather than pending. Targets only change once per
+      // cycle, so this still counts up and settles.
+      j.score += (j.target - j.score) * 0.045;
+    });
 
-    for (const entry of scored) {
-      const y = padY + entry.r.y * rowH;
-      const isTop = leader === entry.i;
+    const cardH = (h - pad * 2) / (jobs.length + 0.5);
+    for (const j of jobs) {
+      const y = pad + j.y * cardH + cardH * 0.12;
+      const ch = cardH * 0.76;
+      const isTop = ranked[0] === j;
 
-      for (let c = 0; c < cols; c++) {
-        // stable per cell offset, so a strong row is bright across its width
-        const hash = Math.sin(entry.i * 41.3 + c * 12.9) * 43758.5453;
-        const frac = hash - Math.floor(hash);
-        const v = clamp01(entry.score * (0.55 + frac * 0.75) - 0.08);
+      panel(ctx, listX, y, listW, ch, unit * 0.035);
+      ctx.fillStyle = rgba(isTop ? ACCENT : INK, (isTop ? 0.12 : 0.04) * a);
+      ctx.fill();
+      ctx.strokeStyle = rgba(isTop ? ACCENT : INK, (isTop ? 0.8 : 0.16) * a);
+      ctx.lineWidth = isTop ? 1.5 : 1;
+      ctx.stroke();
 
-        ctx.fillStyle = rgba(
-          isTop ? ACCENT : v > 0.66 ? ACCENT_DEEP : INK,
-          (0.05 + v * (isTop ? 0.85 : 0.5)) * a,
+      // the score bar along the bottom of each card
+      const barY = y + ch * 0.74;
+      const barW = listW * 0.62;
+      ctx.fillStyle = rgba(INK, 0.1 * a);
+      ctx.fillRect(listX + listW * 0.07, barY, barW, Math.max(2.5, ch * 0.1));
+      ctx.fillStyle = rgba(isTop ? ACCENT : ACCENT_DEEP, (isTop ? 0.95 : 0.5) * a);
+      ctx.fillRect(listX + listW * 0.07, barY, barW * j.score, Math.max(2.5, ch * 0.1));
+
+      // the title line
+      ctx.fillStyle = rgba(INK, (isTop ? 0.7 : 0.32) * a);
+      ctx.fillRect(
+        listX + listW * 0.07,
+        y + ch * 0.28,
+        listW * (0.3 + j.seed * 0.3),
+        Math.max(2.5, ch * 0.11),
+      );
+
+      if (big) {
+        label(
+          ctx,
+          `${Math.round(j.score * 100)}%`,
+          listX + listW * 0.93,
+          y + ch * 0.4,
+          w,
+          h,
+          rgba(isTop ? ACCENT : INK, (isTop ? 1 : 0.55) * a),
+          "right",
         );
-        ctx.fillRect(padX + c * cellW, y, cellW - gap, rowH - gap);
-      }
-
-      if (isTop) {
-        ctx.fillStyle = rgba(ACCENT, 0.95 * a);
-        ctx.fillRect(padX - Math.max(4, w * 0.014), y, Math.max(2, w * 0.006), rowH - gap);
+      } else {
+        // small: a filled block whose width is the score
+        const pw = listW * 0.16;
+        ctx.fillStyle = rgba(isTop ? ACCENT : INK, (isTop ? 0.9 : 0.4) * a);
+        ctx.fillRect(
+          listX + listW * 0.93 - pw,
+          y + ch * 0.3,
+          pw * j.score,
+          Math.max(3, ch * 0.2),
+        );
       }
     }
   },

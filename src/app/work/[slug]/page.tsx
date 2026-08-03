@@ -5,6 +5,8 @@ import Reveal from "@/components/motion/Reveal";
 import Signature from "@/components/signature/Signature";
 import Collaborate from "@/components/chrome/Collaborate";
 import { ProjectSchema } from "@/components/chrome/StructuredData";
+import Architecture from "@/components/sections/Architecture";
+import { architectures } from "@/content/architecture";
 import { categoryLabels, getProject, projects } from "@/content/work";
 
 type Params = { slug: string };
@@ -53,7 +55,13 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
           </Reveal>
 
           <Reveal delay={0.08}>
-            <h1 className="display mb-6 max-w-4xl text-4xl md:text-7xl">{project.title}</h1>
+            <h1
+              data-vt-title
+              style={{ viewTransitionName: "project-title" }}
+              className="display mb-6 max-w-4xl text-4xl md:text-7xl"
+            >
+              {project.title}
+            </h1>
           </Reveal>
 
           <Reveal delay={0.12}>
@@ -63,7 +71,11 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
 
         <Reveal>
           <div className="page-shell">
-            <div className="rounded-frame border-line relative h-64 overflow-hidden border md:h-[420px]">
+            <div
+              data-vt-art
+              style={{ viewTransitionName: "project-art" }}
+              className="rounded-frame border-line relative h-64 overflow-hidden border md:h-[420px]"
+            >
               <Signature variant={project.signature} />
             </div>
           </div>
@@ -139,6 +151,12 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
                 </section>
               </Reveal>
             ))}
+
+            {architectures[project.slug] && (
+              <Reveal>
+                <Architecture arch={architectures[project.slug]} title={project.title} />
+              </Reveal>
+            )}
 
             {project.constraints && (
               <Reveal>

@@ -439,6 +439,42 @@ html.lenis-active {
   pointer-events: none;
 }
 
+/* ------------------------------------------------------ view transitions --- */
+
+/*
+  The default root cross fade is replaced with something quieter, because the
+  page already carries a lot of motion. The named pairs — the project artwork
+  and its title — morph between the card and the case study header.
+*/
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.32s;
+  animation-timing-function: var(--ease-out-quint);
+}
+
+::view-transition-group(project-art),
+::view-transition-group(project-title) {
+  animation-duration: 0.55s;
+  animation-timing-function: var(--ease-out-expo);
+}
+
+/* the morphing pair should not also cross fade, or it ghosts mid flight */
+::view-transition-old(project-art),
+::view-transition-new(project-art) {
+  animation: none;
+  mix-blend-mode: normal;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
 /* an underline that wipes in from the left rather than simply appearing */
 .link-sweep {
   position: relative;

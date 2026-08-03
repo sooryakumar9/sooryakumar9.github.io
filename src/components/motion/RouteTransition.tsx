@@ -31,6 +31,10 @@ export default function RouteTransition() {
     const el = root.current;
     if (!el || prefersReducedMotion()) return;
 
+    // a project navigation morphs the card into the case study header; a
+    // full screen wipe on top of that would fight it
+    if (document.documentElement.dataset.vt === "1") return;
+
     const ctx = gsap.context(() => {
       const panels = gsap.utils.toArray<HTMLElement>(".rt-panel", el);
       gsap.set(el, { pointerEvents: "none", visibility: "visible" });

@@ -41,6 +41,8 @@ export type Project = {
   sections: readonly { heading: string; body: string }[];
   /** short bullets, the engineering constraints that shaped it */
   constraints?: readonly string[];
+  /** the steppable system diagram; every node must be supported by `sections` */
+  architecture?: Architecture;
   outcome: string;
   /** progress work only */
   progress?: {
@@ -49,6 +51,44 @@ export type Project = {
     exploring: readonly string[];
     devLog: readonly { date: string; note: string }[];
   };
+};
+
+/**
+ * A node in a case study's architecture diagram.
+ *
+ * `status` is load bearing on the in-progress work: ZenPro and Diavo have
+ * stages that are sketched but not built, and a diagram that draws them
+ * identically to the shipped ones would be claiming something untrue.
+ */
+export type ArchNode = {
+  id: string;
+  label: string;
+  /** column and row on a small grid, 0 indexed */
+  col: number;
+  row: number;
+  status?: "built" | "planned";
+};
+
+export type ArchEdge = {
+  from: string;
+  to: string;
+  /** drawn dashed, for state coming back rather than a request going out */
+  back?: boolean;
+};
+
+export type ArchStep = {
+  title: string;
+  body: string;
+  /** node ids this step lights up */
+  nodes: readonly string[];
+};
+
+export type Architecture = {
+  cols: number;
+  rows: number;
+  nodes: readonly ArchNode[];
+  edges: readonly ArchEdge[];
+  steps: readonly ArchStep[];
 };
 
 export type ExperienceRecord = {

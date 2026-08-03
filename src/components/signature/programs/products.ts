@@ -12,7 +12,7 @@ import {
   mulberry32,
   rgba,
 } from "../types";
-import { define, phase } from "./shared";
+import { define, labelPx, phase, roomForLabels, scaled } from "./shared";
 
 /**
  * These programs render anywhere from a 380x160 card to a 1240x420 banner, so
@@ -23,27 +23,6 @@ import { define, phase } from "./shared";
  * Text is the other trap. An 8px label is a smudge on a card and clip art on a
  * banner, so labels only appear above `LABEL_MIN` and are sized proportionally.
  */
-// A card is 380x160. At that height a label lands at 8px, which is the smudge
-// this threshold exists to prevent, so labels start above it — panels and
-// banners get them, cards do not.
-const LABEL_MIN_W = 300;
-const LABEL_MIN_H = 210;
-
-/** Count that grows with canvas area, clamped at both ends. */
-function scaled(w: number, h: number, min: number, max: number, per = 26000): number {
-  return Math.round(Math.max(min, Math.min(max, (w * h) / per)));
-}
-
-/** True when the canvas is big enough that a label reads as intentional. */
-function roomForLabels(w: number, h: number): boolean {
-  return w >= LABEL_MIN_W && h >= LABEL_MIN_H;
-}
-
-/** Label size proportional to the box, so it never becomes a smudge. */
-function labelPx(w: number, h: number): number {
-  return Math.max(10, Math.min(14, Math.min(w, h) * 0.036));
-}
-
 /* --------------------------------------------------------------- qsecure --- */
 
 const GLYPHS = "01ABCDEF#$%&@?§¤";
