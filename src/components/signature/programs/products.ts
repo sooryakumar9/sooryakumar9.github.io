@@ -639,32 +639,39 @@ const DISHES = ["Masala dosa", "Rajma chawal", "Palak paneer", "Idli sambar"] as
 /**
  * The nutrition view the product is building.
  *
- * A dish header, its macro split as bars filling to proportion, and micro
- * nutrient rows populating underneath. The dish cycles and the bars refill.
+ * A plate on the left with the macro split drawn as a ring around its rim, the
+ * labelled bars beside it counting up, and micro nutrient chips beneath.
+ * Dishes slide through rather than the bars refilling in place.
  *
  * Deliberately not the search: the same case study page carries a live fuzzy
- * search demo further down, and showing search here too would present one
- * feature twice. Together the canvas and the demo cover the whole product.
+ * search demo further down, so the canvas covers the half of the product that
+ * demo does not.
  *
- * The readout is a **percentage of the macro split**, which is what the bars
- * already encode. It is not a calorie or gram figure: inventing one next to a
- * real dish name would be stating a nutrition fact that nothing backs, on a
- * page about a nutrition product.
+ * The readout is a **percentage of the macro split**, which is what the ring
+ * and the bars already encode. It is not a calorie or gram figure: inventing
+ * one next to a real dish name would be stating a nutrition fact that nothing
+ * backs, on a page about a nutrition product.
  */
-const diavo = define<{ splits: number[][] }>({
+const diavo = define<{ splits: number[][]; marks: { x: number; y: number; r: number }[] }>({
   init: (w, h) => {
     const rand = mulberry32(870);
     void w;
     void h;
-    // a normalised macro split per dish
     const splits = DISHES.map(() => {
       const raw = MACROS.map(() => 0.2 + rand() * 0.8);
       const total = raw.reduce((x, y) => x + y, 0);
       return raw.map((x) => x / total);
     });
-    return { splits };
+    // a few abstract marks inside the plate, so it reads as a plate of
+    // something rather than as an empty gauge
+    const marks = Array.from({ length: 7 }, () => {
+      const ang = rand() * Math.PI * 2;
+      const rad = 0.18 + rand() * 0.45;
+      return { x: Math.cos(ang) * rad, y: Math.sin(ang) * rad, r: 0.06 + rand() * 0.1 };
+    });
+    return { splits, marks };
   },
-  draw: ({ ctx, w, h, t, intro }, { splits }) => {
+  draw: ({ ctx, w, h, t, intro }, { splits, marks }) => {
     const a = ease(intro);
     const unit = Math.min(w, h);
     const big = roomForLabels(w, h);
@@ -672,14 +679,17 @@ const diavo = define<{ splits: number[][] }>({
     const innerW = w - pad * 2;
     const innerH = h - pad * 2;
 
-    const CYCLE = 5.2;
+    const CYCLE = 5.6;
     const n = DISHES.length;
     const which = ((Math.floor(t / CYCLE) % n) + n) % n;
-    const [stage, local] = phase(t % CYCLE, [1.1, 2.6, 1.5]);
-    // 0 bars fill, 1 hold, 2 clear for the next dish
-    const fill = stage === 0 ? ease(local) : stage === 1 ? 1 : 1 - ease(local);
+    const [stage, local] = phase(t % CYCLE, [0.6, 4.2, 0.8]);
+    // 0 enter  1 hold  2 exit
+    const fill = stage === 0 ? ease(local) : 1;
+    const enter = stage === 0 ? ease(local) : 1;
+    const exit = stage === 2 ? ease(local) : 0;
+
     const split = splits[which] ?? [0.5, 0.3, 0.2];
-    // rounding each share independently can total 101; the last one takes the
+    // rounding each share independently can total 101; the last takes the
     // remainder so the readout always adds up
     const pct = split.map((v) => Math.round(v * 100));
     pct[pct.length - 1] = 100 - pct.slice(0, -1).reduce((x, y) => x + y, 0);
@@ -690,46 +700,108 @@ const diavo = define<{ splits: number[][] }>({
     ctx.lineWidth = 1;
     ctx.stroke();
 
+    // the content slides in from the right and leaves to the left, clipped to
+    // the panel — without the clip it travels past the canvas edge and is cut
+    // off by it instead, which at a card size loses half the plate
+    ctx.save();
+    panel(ctx, pad, pad, innerW, innerH, unit * 0.05);
+    ctx.clip();
+
+    const slide = (1 - enter) * innerW * 0.12 - exit * innerW * 0.12;
+    // never fades to nothing: at a card size a fully transparent beat reads as
+    // an empty panel, and the transitions are a meaningful slice of the cycle
+    const alpha = a * Math.max(0.22, Math.min(enter, 1 - exit));
+    ctx.translate(slide, 0);
+    ctx.globalAlpha = Math.max(0, alpha);
+
     const colX = pad + innerW * 0.06;
     const colW = innerW * 0.88;
 
-    /* ---- the dish header ---- */
-    const headY = pad + innerH * 0.13;
+    /* ---- dish header ---- */
+    const headY = pad + innerH * 0.14;
     if (big) {
       label(ctx, DISHES[which].toUpperCase(), colX, headY, w, h, rgba(INK, 0.85 * a));
     } else {
-      // a title bar stands in below the label threshold
       ctx.fillStyle = rgba(INK, 0.6 * a);
-      ctx.fillRect(colX, headY - unit * 0.02, colW * 0.42, Math.max(4, unit * 0.04));
+      ctx.fillRect(colX, headY - unit * 0.02, colW * 0.4, Math.max(4, unit * 0.04));
     }
-    gradientLine(
-      ctx,
-      colX,
-      headY + innerH * 0.1,
-      colX + colW,
-      headY + innerH * 0.1,
-      INK,
-      0.14 * a,
-      0.02 * a,
-      1,
-    );
 
-    /* ---- macro bars ---- */
-    const barTop = pad + innerH * 0.34;
-    const barGap = innerH * 0.13;
+    /* ---- the plate, with the macro ring around its rim ---- */
+    const plateR = Math.min(innerW * 0.14, innerH * 0.26);
+    const pcx = colX + plateR * 1.05;
+    const pcy = pad + innerH * 0.52;
+    const ringW = plateR * 0.26;
+    const ringR = plateR * 0.92;
+
+    // the plate itself
+    const disc = ctx.createRadialGradient(pcx, pcy, 0, pcx, pcy, plateR * 0.72);
+    disc.addColorStop(0, rgba(INK, 0.1 * a));
+    disc.addColorStop(1, rgba(INK, 0.02 * a));
+    ctx.fillStyle = disc;
+    ctx.beginPath();
+    ctx.arc(pcx, pcy, plateR * 0.72, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = rgba(INK, 0.12 * a);
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    for (const m of marks) {
+      ctx.fillStyle = rgba(INK, 0.09 * a);
+      ctx.beginPath();
+      ctx.arc(pcx + m.x * plateR * 0.6, pcy + m.y * plateR * 0.6, m.r * plateR * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // the ring segments, sweeping out with the fill
+    ctx.lineCap = "butt";
+    ctx.lineWidth = ringW;
+    let ang = -Math.PI / 2;
+    const gap = 0.06;
+    for (let i = 0; i < split.length; i++) {
+      const sweep = split[i] * Math.PI * 2 * fill;
+      const tone = i === 0 ? ACCENT : i === 1 ? ACCENT_DEEP : INK;
+      ctx.strokeStyle = rgba(tone, (0.35 + (split.length - i) * 0.16) * a);
+      ctx.beginPath();
+      ctx.arc(pcx, pcy, ringR, ang + gap / 2, ang + Math.max(gap, sweep) - gap / 2);
+      ctx.stroke();
+      ang += sweep;
+    }
+
+    // a highlight travelling the rim, so the long hold beat is never still
+    {
+      const head = (t * 0.42) % 1;
+      const hs = -Math.PI / 2 + head * Math.PI * 2;
+      const grad = ctx.createLinearGradient(
+        pcx + Math.cos(hs) * ringR,
+        pcy + Math.sin(hs) * ringR,
+        pcx + Math.cos(hs + 0.6) * ringR,
+        pcy + Math.sin(hs + 0.6) * ringR,
+      );
+      grad.addColorStop(0, rgba(ACCENT, 0));
+      grad.addColorStop(1, rgba(ACCENT, 0.85 * a));
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = ringW * 0.55;
+      ctx.beginPath();
+      ctx.arc(pcx, pcy, ringR, hs, hs + 0.6);
+      ctx.stroke();
+    }
+
+    /* ---- macro bars, to the right of the plate ---- */
+    const barsX = pcx + plateR * 1.25;
+    const barsW = colX + colW - barsX;
+    const barTop = pad + innerH * 0.38;
+    const barGap = innerH * 0.15;
     const barH = Math.max(6, unit * 0.07);
-    const trackX = colX + (big ? colW * 0.22 : colW * 0.06);
-    const trackW = colX + colW - trackX;
+    const trackX = barsX + (big ? barsW * 0.24 : barsW * 0.04);
+    const trackW = barsX + barsW - trackX - (big ? barsW * 0.14 : 0);
 
     for (let i = 0; i < MACROS.length; i++) {
       const y = barTop + barGap * i;
-      if (big) {
-        label(ctx, MACROS[i], colX, y + barH / 2, w, h, rgba(INK, 0.4 * a));
-      }
-      // track
+      if (big) label(ctx, MACROS[i], barsX, y + barH / 2, w, h, rgba(INK, 0.4 * a));
+
       ctx.fillStyle = rgba(INK, 0.06 * a);
       ctx.fillRect(trackX, y, trackW, barH);
-      // filled to this macro's share of the split
+
       const value = split[i] * fill;
       const tone = i === 0 ? ACCENT : i === 1 ? ACCENT_DEEP : INK;
       const g = ctx.createLinearGradient(trackX, 0, trackX + trackW * value, 0);
@@ -742,7 +814,7 @@ const diavo = define<{ splits: number[][] }>({
         label(
           ctx,
           `${Math.round(pct[i] * fill)}%`,
-          colX + colW,
+          barsX + barsW,
           y + barH / 2,
           w,
           h,
@@ -752,24 +824,23 @@ const diavo = define<{ splits: number[][] }>({
       }
     }
 
-    /* ---- micro nutrient rows ---- */
-    const microY = pad + innerH * 0.86;
+    /* ---- micro nutrient chips ---- */
+    const chipY = pad + innerH * 0.87;
     const cellW = colW / MICROS.length;
     for (let i = 0; i < MICROS.length; i++) {
       const x = colX + cellW * i;
-      // they arrive after the macros, and breathe once settled so the hold is
-      // never perfectly still
-      const arrive = clamp01((fill - 0.55) / 0.45);
-      const breathe = 0.82 + 0.18 * Math.sin(t * 1.5 + i * 1.2);
+      const arrive = clamp01((fill - 0.5) / 0.5);
+      const breathe = 0.75 + 0.25 * Math.sin(t * 1.6 + i * 1.3);
+      coreDot(ctx, x + unit * 0.02, chipY, unit * 0.014 * arrive, ACCENT, 0.8 * a * arrive * breathe);
       if (big) {
-        label(ctx, MICROS[i], x, microY - unit * 0.055, w, h, rgba(INK, 0.32 * a * arrive));
+        label(ctx, MICROS[i], x + unit * 0.05, chipY, w, h, rgba(INK, 0.36 * a * arrive));
+      } else {
+        ctx.fillStyle = rgba(INK, 0.22 * a * arrive);
+        ctx.fillRect(x + unit * 0.045, chipY - unit * 0.012, cellW * 0.42, Math.max(3, unit * 0.024));
       }
-      const pipW = cellW * 0.7;
-      ctx.fillStyle = rgba(INK, 0.06 * a);
-      ctx.fillRect(x, microY, pipW, Math.max(3, unit * 0.028));
-      ctx.fillStyle = rgba(ACCENT, 0.55 * a * arrive * breathe);
-      ctx.fillRect(x, microY, pipW * (0.35 + i * 0.2) * arrive, Math.max(3, unit * 0.028));
     }
+
+    ctx.restore();
   },
 });
 
