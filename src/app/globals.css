@@ -95,8 +95,9 @@ body {
   color: var(--c-bg);
 }
 
-/* the native bar is replaced by the thin rail in ScrollRail.tsx; scrolling
-   itself is untouched, only its default chrome is hidden */
+/* The right edge is kept clear: no native bar and no rail standing in for one.
+   Only the default chrome is hidden — wheel, trackpad, keyboard and touch
+   scrolling are all completely untouched. */
 html {
   scrollbar-width: none;
 }
@@ -307,9 +308,8 @@ html.lenis-active {
 }
 
 /*
- * The same dot, sized to sit on the header avatar. 7px reads as a speck
- * against a 36px photo, and the ring is what lifts it off the image rather
- * than letting it look like part of the picture.
+ * The same dot, sized to sit on the header monogram. 7px reads as a speck
+ * against a 36px mark, and the ring keeps it clear of the circle's border.
  */
 .status-dot--lg {
   width: 10px;
@@ -568,7 +568,7 @@ html.lenis-active {
  * The dark palette is inverted rather than printed: near black over a full
  * page is unreadable on paper and empties a cartridge doing it. Everything the
  * screen version needs and paper does not — the header, the footer, the cursor
- * dot, the scroll rail, every canvas — is removed, and link targets are spelled
+ * dot, every canvas — is removed, and link targets are spelled
  * out, because a printed page that hides its URLs is a dead end.
  */
 @media print {
@@ -602,7 +602,6 @@ html.lenis-active {
   .preloader,
   .smoke,
   .cursor-dot,
-  .scroll-rail,
   [aria-label="Sections"] {
     display: none !important;
   }

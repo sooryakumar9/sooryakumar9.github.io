@@ -30,9 +30,8 @@ const DOTS_GAP = 18;
  * A floating capsule rather than a full width bar, so the hero canvas runs
  * behind and past it on every side.
  *
- * It sits inset from the right by more than the scroll rail's own offset, so
- * the two never overlap. The pill gains its border and blur once you have
- * scrolled off the hero; at the top it is almost invisible.
+ * The pill gains its border and blur once you have scrolled off the hero; at
+ * the top it is almost invisible.
  *
  * Scrolling down collapses it to the brand alone. Scrolling up, returning to
  * the top, hovering it or moving focus into it brings the nav back. The width

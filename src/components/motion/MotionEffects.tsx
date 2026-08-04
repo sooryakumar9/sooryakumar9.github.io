@@ -10,9 +10,8 @@ import { onMotionChange } from "@/lib/motion";
  * Components that check `prefersReducedMotion()` at mount cover the case where
  * motion is off before the page loads, but they cannot help with a toggle
  * thrown mid-visit: their tweens already exist. Pausing the global timeline
- * catches all of them at once — the marquee, the scroll rail, the cursor
- * easing, every quickTo — instead of threading a dependency through a dozen
- * components.
+ * catches all of them at once — the marquee, the cursor easing, every quickTo
+ * — instead of threading a dependency through a dozen components.
  *
  * Reveal tweens are paused too, which would strand a section at zero opacity
  * were it not for `[data-motion="off"] .js-reveal { opacity: 1 !important }`.
