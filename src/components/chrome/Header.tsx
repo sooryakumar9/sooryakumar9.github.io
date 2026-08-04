@@ -53,10 +53,9 @@ export default function Header() {
   const brandRef = useRef<HTMLAnchorElement | null>(null);
   const dotsRef = useRef<HTMLButtonElement | null>(null);
 
-  // pointer and focus are tracked apart so that leaving with the mouse while a
-  // link still holds focus does not release the bar
+  // hover is a flag because there is no way to ask the DOM whether the pointer
+  // is over an element. Keyboard focus is *not* a flag: see `keyboardInside`.
   const hovering = useRef(false);
-  const focused = useRef(false);
 
   useEffect(() => {
     const header = headerRef.current;
@@ -100,11 +99,29 @@ export default function Header() {
     const reduced = prefersReducedMotion();
     let last = window.scrollY;
 
+    /*
+     * Asked fresh every scroll rather than tracked in a ref.
+     *
+     * A flag set on focus and cleared on blur cannot be cleared when focus
+     * moves *within* the header, because focusout's relatedTarget is still
+     * inside it. Tabbing into the nav and then clicking a link left the flag
+     * stuck true and the bar pinned open for the rest of the visit. Reading
+     * the live state instead means there is no flag to go stale.
+     */
+    const keyboardInside = () => {
+      const el = document.activeElement;
+      return (
+        el instanceof Element &&
+        headerRef.current?.contains(el) === true &&
+        el.matches(":focus-visible")
+      );
+    };
+
     const onScroll = () => {
       const y = window.scrollY;
       setLifted(y > 40);
 
-      if (!reduced && !(hovering.current || focused.current)) {
+      if (!reduced && !hovering.current && !keyboardInside()) {
         if (y < 80) setCollapsed(false);
         else if (y > last + DEADZONE) setCollapsed(true);
         else if (y < last - DEADZONE) setCollapsed(false);
@@ -149,13 +166,10 @@ export default function Header() {
        * the bar open for the rest of the page visit.
        */
       onFocus={(e) => {
+        // only expands here; staying expanded is decided per scroll by
+        // `keyboardInside`, so there is no matching blur handler to get wrong
         if (!(e.target instanceof Element) || !e.target.matches(":focus-visible")) return;
-        focused.current = true;
         setCollapsed(false);
-      }}
-      onBlur={(e) => {
-        if (e.currentTarget.contains(e.relatedTarget)) return;
-        focused.current = false;
       }}
     >
       <div
