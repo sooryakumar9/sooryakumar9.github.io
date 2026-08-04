@@ -275,8 +275,10 @@ html.lenis-active {
   inset: -30%;
   pointer-events: none;
   border-radius: 9999px;
-  filter: blur(90px);
-  opacity: 0.5;
+  /* was blur(90px) at 0.5: the haze washed teal across the whole hero and
+     read as the page being out of focus rather than as atmosphere */
+  filter: blur(70px);
+  opacity: 0.3;
 }
 
 .smoke-a {
@@ -726,10 +728,6 @@ html.lenis-active {
   color: var(--c-fg);
 }
 
-[data-motion="off"] .smoke {
-  opacity: 0.35;
-}
-
 [data-motion="off"] ::view-transition-group(*),
 [data-motion="off"] ::view-transition-old(*),
 [data-motion="off"] ::view-transition-new(*) {
@@ -761,7 +759,4 @@ html.lenis-active {
     color: var(--c-fg);
   }
 
-  .smoke {
-    opacity: 0.35;
-  }
 }
