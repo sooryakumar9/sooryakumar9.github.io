@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsapSetup";
-import { FINE_POINTER, REDUCED_MOTION, useMediaQuery } from "@/lib/clientEnv";
+import { FINE_POINTER, useMediaQuery } from "@/lib/clientEnv";
+import { useMotionOff } from "@/lib/motion";
 
 /**
  * A follower that lags the real cursor, swells over anything interactive, and
@@ -18,7 +19,7 @@ export default function CursorDot() {
   // both queries are read unconditionally; combining them with && inline
   // would short circuit the second hook call
   const finePointer = useMediaQuery(FINE_POINTER);
-  const reduced = useMediaQuery(REDUCED_MOTION);
+  const reduced = useMotionOff();
   const enabled = finePointer && !reduced;
 
   useEffect(() => {

@@ -75,12 +75,12 @@ export default function AboutPage() {
                       <span aria-hidden className="status-dot" />
                       Available for work in {profile.location}
                     </p>
-                    <a
-                      href={profile.resume}
+                    <TransitionLink
+                      href="/resume"
                       className="text-accent hover:text-accent-deep mt-2 inline-block text-sm transition-colors"
                     >
-                      Download résumé <span aria-hidden>↓</span>
-                    </a>
+                      Read the résumé <span aria-hidden>→</span>
+                    </TransitionLink>
                   </div>
                 </div>
               </Reveal>

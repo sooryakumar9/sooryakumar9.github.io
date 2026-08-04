@@ -559,7 +559,183 @@ html.lenis-active {
   color: var(--c-dead);
 }
 
+/* --------------------------------------------------------------- print --- */
+
+/*
+ * Mainly for /resume, which exists partly so that Cmd+P produces something
+ * worth handing over.
+ *
+ * The dark palette is inverted rather than printed: near black over a full
+ * page is unreadable on paper and empties a cartridge doing it. Everything the
+ * screen version needs and paper does not — the header, the footer, the cursor
+ * dot, the scroll rail, every canvas — is removed, and link targets are spelled
+ * out, because a printed page that hides its URLs is a dead end.
+ */
+@media print {
+  :root {
+    --c-bg: #ffffff;
+    --c-fg: #111111;
+    --c-muted: #444444;
+    --c-line: rgba(0, 0, 0, 0.18);
+    --c-line-strong: rgba(0, 0, 0, 0.32);
+    --c-surface: #ffffff;
+    --c-accent: #111111;
+    --c-accent-deep: #111111;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  /*
+   * `body >` matters: the site chrome is a direct child of body, while the
+   * résumé's own <header> block carrying the name and contact details is
+   * nested inside main. An unscoped `header` selector removed exactly the part
+   * of the page a printed résumé cannot do without.
+   */
+  body > header,
+  body > footer,
+  canvas,
+  .no-print,
+  .preloader,
+  .smoke,
+  .cursor-dot,
+  .scroll-rail,
+  [aria-label="Sections"] {
+    display: none !important;
+  }
+
+  /* the reveal animation never runs on paper */
+  .js-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  main,
+  .page-shell {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+
+  /*
+   * Tightened so the whole thing lands on one sheet. Nothing is dropped to get
+   * there — the spacing that gives the screen version room to breathe is
+   * simply not what paper needs.
+   */
+  .resume-sheet {
+    padding: 0 !important;
+    font-size: 9.5pt;
+    line-height: 1.35;
+  }
+
+  .resume-sheet h1 {
+    font-size: 22pt;
+  }
+
+  .resume-sheet h2 {
+    margin-bottom: 0.5rem;
+  }
+
+  .resume-sheet h3 {
+    font-size: 11pt;
+  }
+
+  .resume-sheet header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .resume-sheet section {
+    margin-bottom: 1rem;
+  }
+
+  .resume-sheet .space-y-7 > * + * {
+    margin-top: 0.75rem;
+  }
+
+  .resume-sheet .space-y-6 > * + * {
+    margin-top: 0.6rem;
+  }
+
+  /* an entry that straddles a page break is the one thing readers notice */
+  .resume-entry {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  a {
+    color: #111 !important;
+    text-decoration: none;
+  }
+
+  /*
+   * Spell out where external links go, except in the contact list, where the
+   * link text is already the address and the expansion only says it twice.
+   */
+  .resume-sheet a[href^="http"]:not(.resume-contact a)::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    color: #555;
+    word-break: break-all;
+  }
+
+  @page {
+    margin: 14mm;
+  }
+}
+
 /* ------------------------------------------------------ reduced motion --- */
+
+/*
+ * Two selectors, one set of rules.
+ *
+ * `[data-motion="off"]` is the live one: the head script resolves it before
+ * first paint from the OS setting and the footer toggle, and `setMotion` flips
+ * it at runtime. The media query stays as well, because it is the only one of
+ * the two that works with scripting off.
+ *
+ * `.js-reveal` is the load bearing rule. Reveal animates from an inline
+ * `opacity: 0` that GSAP writes without `!important`, so this beats it the
+ * instant the attribute changes. That is what makes the toggle safe to apply
+ * live: no section can be left stranded invisible waiting for a scroll trigger
+ * that will never fire.
+ */
+[data-motion="off"] {
+  scroll-behavior: auto;
+}
+
+[data-motion="off"] *,
+[data-motion="off"] *::before,
+[data-motion="off"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+[data-motion="off"] .js-reveal {
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+[data-motion="off"] .js-hero-char {
+  color: var(--c-fg);
+}
+
+[data-motion="off"] .smoke {
+  opacity: 0.35;
+}
+
+[data-motion="off"] ::view-transition-group(*),
+[data-motion="off"] ::view-transition-old(*),
+[data-motion="off"] ::view-transition-new(*) {
+  animation: none !important;
+}
 
 @media (prefers-reduced-motion: reduce) {
   html {

@@ -5,6 +5,7 @@ import { attach } from "./engine";
 import { programs } from "./programs";
 import type { SignatureVariant } from "@/content/types";
 import { prefersReducedMotion, hasFinePointer } from "@/lib/gsapSetup";
+import { useMotionOff } from "@/lib/motion";
 
 /**
  * Decorative generative visual for a project or the hero. Purely
@@ -28,6 +29,9 @@ export default function Signature({
   interactive?: boolean;
 }) {
   const ref = useRef<HTMLCanvasElement | null>(null);
+  // re-attaches when the footer toggle moves, so the canvas swaps between the
+  // live loop and the settled still frame without a reload
+  const motionOff = useMotionOff();
 
   useEffect(() => {
     const canvas = ref.current;
@@ -68,7 +72,7 @@ export default function Signature({
       window.removeEventListener("pointerleave", onLeave);
       handle.destroy();
     };
-  }, [variant, interactive]);
+  }, [variant, interactive, motionOff]);
 
   return (
     <canvas

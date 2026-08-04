@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ComponentProps, MouseEvent } from "react";
-import { REDUCED_MOTION, useMediaQuery } from "@/lib/clientEnv";
+import { useMotionOff } from "@/lib/motion";
 
 type WithVT = Document & {
   startViewTransition?: (cb: () => void | Promise<void>) => { finished: Promise<void> };
@@ -31,7 +31,7 @@ type Props = ComponentProps<typeof Link> & {
  */
 export default function TransitionLink({ morphFrom, onClick, href, ...rest }: Props) {
   const router = useRouter();
-  const reduced = useMediaQuery(REDUCED_MOTION);
+  const reduced = useMotionOff();
 
   const handle = (e: MouseEvent<HTMLAnchorElement>) => {
     onClick?.(e);

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Lenis from "lenis";
 import { gsap, ScrollTrigger, prefersReducedMotion, hasFinePointer } from "@/lib/gsapSetup";
+import { useMotionOff } from "@/lib/motion";
 
 /**
  * Lenis smooth scrolling, desktop fine pointer only, disabled entirely under
@@ -13,6 +14,10 @@ import { gsap, ScrollTrigger, prefersReducedMotion, hasFinePointer } from "@/lib
  * this, pinned sections judder by a frame under smooth scroll.
  */
 export default function SmoothScroll() {
+  // Lenis is torn down and rebuilt when motion is toggled; its easing is
+  // itself motion, so leaving it running would only half honour the switch
+  const motionOff = useMotionOff();
+
   useEffect(() => {
     if (prefersReducedMotion() || !hasFinePointer()) return;
 
@@ -34,7 +39,7 @@ export default function SmoothScroll() {
       lenis.destroy();
       document.documentElement.classList.remove("lenis-active");
     };
-  }, []);
+  }, [motionOff]);
 
   return null;
 }

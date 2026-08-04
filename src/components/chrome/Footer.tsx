@@ -1,17 +1,18 @@
 import TransitionLink from "@/components/motion/TransitionLink";
+import MotionToggle from "@/components/chrome/MotionToggle";
 import { profile } from "@/content/profile";
 
 const menu = [
   { href: "/", label: "Home" },
   { href: "/work", label: "Work" },
   { href: "/about", label: "About" },
+  { href: "/resume", label: "Résumé" },
 ];
 
 const connect = [
   { href: profile.github, label: "GitHub" },
   { href: profile.linkedin, label: "LinkedIn" },
   { href: profile.leetcode, label: "LeetCode" },
-  { href: profile.resume, label: "Résumé", download: true },
 ];
 
 export default function Footer() {
@@ -38,8 +39,8 @@ export default function Footer() {
               <li key={item.label}>
                 <a
                   href={item.href}
-                  target={item.download ? undefined : "_blank"}
-                  rel={item.download ? undefined : "noreferrer"}
+                  target="_blank"
+                  rel="noreferrer"
                   className="link-sweep text-muted hover:text-fg transition-colors"
                 >
                   {item.label} <span aria-hidden>↗</span>
@@ -68,9 +69,12 @@ export default function Footer() {
         <p className="text-muted text-xs">
           © {new Date().getFullYear()} {profile.name}. Built with Next.js, GSAP and a lot of coffee.
         </p>
-        <a href="#main" className="text-muted hover:text-fg text-xs transition-colors">
-          Back to top <span aria-hidden>↑</span>
-        </a>
+        <div className="flex items-center gap-6">
+          <MotionToggle />
+          <a href="#main" className="text-muted hover:text-fg text-xs transition-colors">
+            Back to top <span aria-hidden>↑</span>
+          </a>
+        </div>
       </div>
     </footer>
   );

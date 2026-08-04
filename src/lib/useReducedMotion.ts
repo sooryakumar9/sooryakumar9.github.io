@@ -1,8 +1,13 @@
 "use client";
 
-import { REDUCED_MOTION, useMediaQuery } from "./clientEnv";
+import { useMotionOff } from "./motion";
 
-/** Reactive reduced motion preference. False on the server. */
+/**
+ * Reactive motion preference. False on the server.
+ *
+ * Folds in both the OS setting and the footer toggle, so a component using this
+ * re-renders the moment either moves.
+ */
 export function useReducedMotion(): boolean {
-  return useMediaQuery(REDUCED_MOTION);
+  return useMotionOff();
 }

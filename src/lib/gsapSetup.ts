@@ -5,6 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Observer } from "gsap/Observer";
 import { Flip } from "gsap/Flip";
 import { SplitText } from "gsap/SplitText";
+import { isMotionOff } from "./motion";
 
 /**
  * Plugin registration happens once, on the client only. Every module that
@@ -15,10 +16,16 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger, Observer, Flip, SplitText);
 }
 
-/** True when the visitor has asked the OS for less motion. */
+/**
+ * True when motion should be suppressed, whether that came from the OS or from
+ * the toggle in the footer.
+ *
+ * Delegating here rather than reading the media query directly is what lets the
+ * toggle reach every animated component without editing any of them: they all
+ * already call this at mount.
+ */
 export function prefersReducedMotion(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  return isMotionOff();
 }
 
 /** Coarse pointers get no cursor follower and no hover only affordances. */

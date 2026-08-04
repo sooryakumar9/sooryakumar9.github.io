@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { FRAGMENT_SRC, VERTEX_SRC } from "./heroShader";
 import Signature from "./Signature";
 import { prefersReducedMotion, hasFinePointer } from "@/lib/gsapSetup";
+import { useMotionOff } from "@/lib/motion";
 
 /**
  * The hero background: a full-screen fragment shader.
@@ -27,6 +28,9 @@ export default function HeroField({
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [failed, setFailed] = useState(false);
+  // rebuilds the GL context on toggle, so the field either drifts or holds a
+  // single settled frame, matching whatever the rest of the page is doing
+  const motionOff = useMotionOff();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -177,7 +181,7 @@ export default function HeroField({
       gl.deleteShader(fs);
       gl.deleteBuffer(buffer);
     };
-  }, [interactive]);
+  }, [interactive, motionOff]);
 
   if (failed) {
     return <Signature variant="hero" className={className} interactive={interactive} />;

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Manrope, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import SmoothScroll from "@/components/motion/SmoothScroll";
+import MotionEffects from "@/components/motion/MotionEffects";
 import ScrollRail from "@/components/motion/ScrollRail";
 import Preloader from "@/components/chrome/Preloader";
 import CursorDot from "@/components/chrome/CursorDot";
@@ -101,10 +102,16 @@ export default function RootLayout({
 
           The stamp is written only when the intro actually plays, so a run of
           refreshes inside the window cannot keep pushing the next one away.
+
+          The same pass resolves `data-motion`, which is the single runtime
+          truth for whether the site animates: the stored choice from the footer
+          toggle if there is one, the OS setting otherwise. It has to be decided
+          here, not in React, or a visitor who asked for stillness would still
+          catch a frame of it.
         */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var d=document.documentElement;try{var n=Date.now(),k="sk-intro-at",last=parseInt(localStorage.getItem(k)||"0",10)||0;var skip=n-last<300000||matchMedia("(prefers-reduced-motion: reduce)").matches;if(skip){d.dataset.intro="skip";d.dataset.introDone="true"}else{localStorage.setItem(k,String(n))}}catch(e){d.dataset.intro="skip";d.dataset.introDone="true"}})();`,
+            __html: `(function(){var d=document.documentElement;var off=false;try{off=matchMedia("(prefers-reduced-motion: reduce)").matches;var m=localStorage.getItem("sk-motion");if(m==="on")off=false;else if(m==="off")off=true}catch(e){}d.dataset.motion=off?"off":"on";try{var n=Date.now(),k="sk-intro-at",last=parseInt(localStorage.getItem(k)||"0",10)||0;var skip=n-last<300000||off;if(skip){d.dataset.intro="skip";d.dataset.introDone="true"}else{localStorage.setItem(k,String(n))}}catch(e){d.dataset.intro="skip";d.dataset.introDone="true"}})();`,
           }}
         />
         {/* without scripting the panel could never lift, so never show it */}
@@ -114,6 +121,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <PersonSchema />
+        <MotionEffects />
         <SmoothScroll />
         <Preloader />
         <ScrollRail />

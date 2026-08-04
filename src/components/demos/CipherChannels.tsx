@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useMemo, useState } from "react";
 import { CIPHER_PLACEHOLDER } from "@/content/demoData";
-import { REDUCED_MOTION, useMediaQuery } from "@/lib/clientEnv";
+import { useMotionOff } from "@/lib/motion";
 
 const GLYPHS = "0123456789ABCDEF#$%&@?§¤";
 
@@ -38,7 +38,7 @@ export default function CipherChannels() {
   // the message never has to reset state from inside an effect
   const [tick, setTick] = useState(0);
   const [salt, setSalt] = useState(0);
-  const reduced = useMediaQuery(REDUCED_MOTION);
+  const reduced = useMotionOff();
   const inputId = useId();
 
   const message = text || CIPHER_PLACEHOLDER;

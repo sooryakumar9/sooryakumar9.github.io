@@ -241,12 +241,15 @@ export default function Header() {
               );
             })}
 
-            <a
-              href={profile.resume}
-              className="link-sweep text-muted hover:text-fg hidden text-sm transition-colors sm:inline"
+            <TransitionLink
+              href="/resume"
+              aria-current={pathname.startsWith("/resume") ? "page" : undefined}
+              className={`link-sweep hidden text-sm transition-colors sm:inline ${
+                pathname.startsWith("/resume") ? "text-accent" : "text-muted hover:text-fg"
+              }`}
             >
-              Résumé <span aria-hidden>↗</span>
-            </a>
+              Résumé
+            </TransitionLink>
 
             <span aria-hidden className="bg-line hidden h-5 w-px sm:block" />
 
