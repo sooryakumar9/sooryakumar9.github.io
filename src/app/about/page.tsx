@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import TransitionLink from "@/components/motion/TransitionLink";
 import Reveal from "@/components/motion/Reveal";
 import Journey from "@/components/sections/Journey";
@@ -34,76 +33,47 @@ export default function AboutPage() {
             </TransitionLink>
           </Reveal>
 
-          {/*
-            Two columns from lg, where there is room beside the heading for the
-            portrait. Below that it stacks in source order, so the photo lands
-            under the subtitle rather than pushing the heading off the screen.
-          */}
-          <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-16 xl:grid-cols-[minmax(0,1fr)_380px]">
-            <div>
-              <Reveal delay={0.05}>
-                <p className="eyebrow mb-4">About</p>
-              </Reveal>
+          <Reveal delay={0.05}>
+            <p className="eyebrow mb-4">About</p>
+          </Reveal>
 
-              <Reveal delay={0.08}>
-                <h1 className="display mb-6 text-5xl md:text-7xl xl:text-8xl">
-                  Hey, thanks for scrolling this far
-                </h1>
-              </Reveal>
+          <Reveal delay={0.08}>
+            <h1 className="display mb-6 max-w-4xl text-5xl md:text-8xl">
+              Hey, thanks for scrolling this far
+            </h1>
+          </Reveal>
 
-              <Reveal delay={0.12}>
-                <RotatingSubtitle />
-              </Reveal>
+          <Reveal delay={0.12}>
+            <RotatingSubtitle />
+          </Reveal>
 
-              {/* in this column rather than below it, so the text side reaches
-                  the same depth as the portrait instead of leaving a gap */}
-              <Reveal delay={0.2}>
-                <div className="border-line mt-12 grid gap-6 border-t pt-8 sm:grid-cols-2">
-                  <div>
-                    <h2 className="eyebrow mb-2">Education</h2>
-                    <p className="text-sm">{profile.education.degree}</p>
-                    <p className="text-muted text-sm">
-                      {profile.education.school}, {profile.education.place}
-                    </p>
-                    <p className="text-muted mt-1 font-mono text-xs">
-                      {profile.education.period} · CGPA {profile.education.cgpa}
-                    </p>
-                  </div>
-                  <div>
-                    <h2 className="eyebrow mb-2">Currently</h2>
-                    <p className="text-muted flex items-center gap-2 text-sm">
-                      <span aria-hidden className="status-dot" />
-                      Available for work in {profile.location}
-                    </p>
-                    <TransitionLink
-                      href="/resume"
-                      className="text-accent hover:text-accent-deep mt-2 inline-block text-sm transition-colors"
-                    >
-                      Read the résumé <span aria-hidden>→</span>
-                    </TransitionLink>
-                  </div>
-                </div>
-              </Reveal>
-            </div>
-
-            <Reveal delay={0.16}>
-              {/* content here, not decoration, so it gets a real alt */}
-              <div className="rounded-frame border-line bg-surface relative overflow-hidden border">
-                <Image
-                  src="/soorya-portrait.webp"
-                  alt={profile.name}
-                  width={920}
-                  height={1150}
-                  priority
-                  className="h-auto w-full object-cover"
-                />
-                <div
-                  aria-hidden
-                  className="from-bg/70 pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t to-transparent"
-                />
+          <Reveal delay={0.16}>
+            <div className="border-line mt-12 grid max-w-3xl gap-6 border-t pt-8 sm:grid-cols-2">
+              <div>
+                <h2 className="eyebrow mb-2">Education</h2>
+                <p className="text-sm">{profile.education.degree}</p>
+                <p className="text-muted text-sm">
+                  {profile.education.school}, {profile.education.place}
+                </p>
+                <p className="text-muted mt-1 font-mono text-xs">
+                  {profile.education.period} · CGPA {profile.education.cgpa}
+                </p>
               </div>
-            </Reveal>
-          </div>
+              <div>
+                <h2 className="eyebrow mb-2">Currently</h2>
+                <p className="text-muted flex items-center gap-2 text-sm">
+                  <span aria-hidden className="status-dot" />
+                  Available for work in {profile.location}
+                </p>
+                <TransitionLink
+                  href="/resume"
+                  className="text-accent hover:text-accent-deep mt-2 inline-block text-sm transition-colors"
+                >
+                  Read the résumé <span aria-hidden>→</span>
+                </TransitionLink>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 

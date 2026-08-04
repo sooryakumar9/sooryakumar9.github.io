@@ -1,7 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
   <rect width="32" height="32" rx="8" fill="#08090b"/>
-  <circle cx="9" cy="10" r="2.2" fill="#5eead4"/>
-  <circle cx="23" cy="14" r="2.2" fill="#5eead4"/>
-  <circle cx="13" cy="23" r="2.2" fill="#22d3ee"/>
-  <path d="M9 10 L23 14 L13 23 Z" fill="none" stroke="#5eead4" stroke-width="1.4" stroke-opacity="0.6"/>
+  <!--
+    The letters are paths rather than a <text> node. A favicon renders outside
+    the page, with no guarantee about which fonts are available to it, and a
+    fallback face would change the mark itself. Drawn heavy because 16px in a
+    crowded tab strip is the size that decides whether it reads at all.
+  -->
+  <!--
+    Nudged: the two glyphs together span x 6.4 to 28.3 and y 8.5 to 20.9, so
+    their own centre is up and to the right of the square's. Optically centring
+    them matters more here than agreeing with the coordinate system.
+  -->
+  <g fill="#5eead4" transform="translate(-1.35, 1.25)">
+    <path d="M6.4 12.2c0-2.3 2-3.7 4.7-3.7 1.8 0 3.3.5 4.3 1.4l-1.4 2.2c-.8-.6-1.8-1-2.9-1-1.1 0-1.9.4-1.9 1.1 0 .7.8 1 2.4 1.3 2.4.5 4 1.4 4 3.6 0 2.4-2.1 3.8-4.9 3.8-2 0-3.7-.6-4.9-1.7l1.5-2.1c.9.8 2.2 1.3 3.4 1.3 1.3 0 2.1-.4 2.1-1.2 0-.7-.7-1-2.5-1.3-2.3-.5-3.9-1.4-3.9-3.7z"/>
+    <path d="M17.7 8.7h2.9v5l4.3-5h3.4l-4.6 5.2 4.8 6.8h-3.4l-3.3-4.8-1.2 1.4v3.4h-2.9z"/>
+  </g>
 </svg>

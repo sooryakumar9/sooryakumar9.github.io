@@ -1,7 +1,6 @@
 "use client";
 
 import TransitionLink from "@/components/motion/TransitionLink";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Magnetic from "@/components/motion/Magnetic";
@@ -189,20 +188,14 @@ export default function Header() {
           className="group flex shrink-0 items-center gap-3"
           aria-label={`${profile.name}, home`}
         >
-          {/*
-            The photo carries no alt text on purpose: the link around it is
-            already labelled "Soorya Kumar, home", so describing the image
-            again would announce the same person twice.
-          */}
+          {/* the monogram, the same mark as the favicon and the iOS icon */}
           <span className="relative block shrink-0">
-            <Image
-              src="/soorya-avatar.webp"
-              alt=""
-              width={128}
-              height={128}
-              priority
-              className="ring-line-strong h-9 w-9 rounded-full object-cover ring-1 transition-shadow group-hover:ring-[var(--c-accent)] md:h-10 md:w-10"
-            />
+            <span
+              aria-hidden
+              className="border-line-strong text-accent grid h-9 w-9 place-items-center rounded-full border font-mono text-[11px] tracking-tight transition-colors group-hover:border-[var(--c-accent)] md:h-10 md:w-10 md:text-xs"
+            >
+              SK
+            </span>
             {/*
               The dot is positioned by this wrapper rather than by itself:
               `.status-dot` declares `position: relative` for its own ripple

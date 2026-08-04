@@ -23,8 +23,7 @@ node scripts/shots.mjs --reduced --out shots-reduced
 ```
 
 `scripts/shots.mjs` walks every route at 1440 / 768 / 390 and reports console errors, failed
-requests and horizontal overflow. `scripts/portrait.mjs` derives the avatar and portrait crops from
-`assets/portrait-source.jpeg`.
+requests and horizontal overflow.
 
 ## Structure
 
