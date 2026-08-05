@@ -119,25 +119,36 @@ export const foundations = {
       evidence: ["madhu-marga"],
     },
   ],
+  /**
+   * The core topics. `title` is the searchable full name, which is what the
+   * résumé prints and what a keyword filter matches on. `short` is what the
+   * chip row on the site uses, because "Object Oriented Programming" as a chip
+   * is a paragraph.
+   */
   fundamentals: [
     {
       title: "Data Structures & Algorithms",
+      short: "DSA",
       note: "The part that decides whether a thing scales or just works today.",
     },
     {
       title: "Operating Systems",
+      short: "OS",
       note: "Processes, memory, scheduling. Why your program is slow for reasons that aren't your program.",
     },
     {
       title: "DBMS",
+      short: "DBMS",
       note: "Schemas, indexes, transactions. Most product bugs are really data model bugs.",
     },
     {
       title: "Computer Networks",
+      short: "Networks",
       note: "What actually happens between the request and the response.",
     },
     {
       title: "Object Oriented Programming",
+      short: "OOP",
       note: "Drawing the boundaries so the code survives the second feature.",
     },
   ],

@@ -119,6 +119,24 @@ export default function Foundations() {
         <Reveal>
           <div>
             <h3 className="eyebrow mb-4">Engineering stack</h3>
+
+            {/* the core topics and the tools are different kinds of thing, so
+                they are labelled rather than poured into one undifferentiated
+                row where DBMS sits next to Postman */}
+            <p className="text-muted mb-2 text-xs">Core</p>
+            <ul className="mb-5 flex flex-wrap gap-2">
+              {foundations.fundamentals.map((f) => (
+                <li
+                  key={f.title}
+                  title={f.title}
+                  className="border-line text-muted rounded-chip border px-3 py-1.5 font-mono text-xs"
+                >
+                  {f.short}
+                </li>
+              ))}
+            </ul>
+
+            <p className="text-muted mb-2 text-xs">Languages and tools</p>
             <ul className="flex flex-wrap gap-2">
               {foundations.toolchain.map((t) => (
                 <li
