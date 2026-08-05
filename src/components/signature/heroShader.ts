@@ -30,6 +30,7 @@ uniform vec2  u_res;
 uniform float u_time;
 uniform vec2  u_mouse;   // normalised 0..1, y up, already eased on the CPU
 uniform float u_active;  // 0 when the pointer has left, 1 when it is present
+uniform float u_dim;     // 1 on the home hero, lower where it is only a backdrop
 
 /* ---- 3D simplex noise (Ashima / Gustavson formulation) ------------------ */
 
@@ -142,6 +143,16 @@ void main() {
   float vig = smoothstep(1.3, 0.45, distance(uv, vec2(0.5)));
   outc *= mix(0.82, 1.0, vig);
 
-  gl_FragColor = vec4(outc, 1.0);
+  /*
+   * Dimming happens here rather than with CSS opacity on the canvas.
+   *
+   * An opacity layer over a full screen canvas is a separate composited
+   * surface that has to be blended every frame, and on the about page that
+   * alone was costing about a fifth of the frames while scrolling. There is
+   * nothing between this canvas and the page background, so mixing toward the
+   * background colour is the same picture for free.
+   */
+  const vec3 PAGE_BG = vec3(0.031, 0.035, 0.043);
+  gl_FragColor = vec4(mix(PAGE_BG, outc, u_dim), 1.0);
 }
 `;

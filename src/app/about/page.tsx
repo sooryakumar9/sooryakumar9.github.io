@@ -18,8 +18,9 @@ export default function AboutPage() {
   return (
     <>
       <section className="relative overflow-hidden pt-32 pb-16 md:pt-44">
-        <div aria-hidden className="absolute inset-0 z-0 opacity-40">
-          <HeroField interactive={false} />
+        {/* dimmed in the shader, not with an opacity layer: see HeroField */}
+        <div aria-hidden className="absolute inset-0 z-0">
+          <HeroField interactive={false} dim={0.4} fps={24} />
         </div>
         <div aria-hidden className="smoke smoke-b z-0" />
 

@@ -22,9 +22,23 @@ export default function HeroField({
   className = "",
   /** track the cursor; the About page uses this purely as a backdrop */
   interactive = true,
+  /**
+   * How present the field is, 0 to 1. Applied inside the shader rather than
+   * with a CSS opacity wrapper, which would add a full screen composited layer
+   * to blend on every frame.
+   */
+  dim = 1,
+  /**
+   * Cap on how often the field redraws. The home hero is the showpiece and
+   * runs uncapped; a dimmed backdrop behind body text does not need sixty
+   * frames a second of a field that takes seconds to visibly change.
+   */
+  fps,
 }: {
   className?: string;
   interactive?: boolean;
+  dim?: number;
+  fps?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [failed, setFailed] = useState(false);
@@ -92,6 +106,8 @@ export default function HeroField({
     const uTime = gl.getUniformLocation(program, "u_time");
     const uMouse = gl.getUniformLocation(program, "u_mouse");
     const uActive = gl.getUniformLocation(program, "u_active");
+    const uDim = gl.getUniformLocation(program, "u_dim");
+    gl.uniform1f(uDim, dim);
 
     const reduced = prefersReducedMotion();
     const wantsPointer = interactive && hasFinePointer() && !reduced;
@@ -151,13 +167,21 @@ export default function HeroField({
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
 
+    // easing still advances every frame, so a capped field follows the
+    // pointer along the same curve, it just paints that curve less often
+    const minGap = fps ? 1000 / fps : 0;
+    let painted = -Infinity;
+
     function frame(now: number) {
       raf = 0;
       if (!visible) return;
       pointer.x += (pointer.tx - pointer.x) * 0.045;
       pointer.y += (pointer.ty - pointer.y) * 0.045;
       pointer.active += (pointer.tActive - pointer.active) * 0.06;
-      draw((now - start) / 1000);
+      if (now - painted >= minGap) {
+        painted = now;
+        draw((now - start) / 1000);
+      }
       raf = requestAnimationFrame(frame);
     }
 
@@ -181,7 +205,7 @@ export default function HeroField({
       gl.deleteShader(fs);
       gl.deleteBuffer(buffer);
     };
-  }, [interactive, motionOff]);
+  }, [interactive, motionOff, dim, fps]);
 
   if (failed) {
     return <Signature variant="hero" className={className} interactive={interactive} />;
