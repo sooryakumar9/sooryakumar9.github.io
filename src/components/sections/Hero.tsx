@@ -75,32 +75,51 @@ export default function Hero() {
   useLayoutEffect(() => {
     const el = root.current;
     const word = wordRef.current;
-    if (!el || !word) return;
+    const name = nameRef.current;
+    if (!el || !word || !name) return;
 
     // with motion reduced the name simply stays as it is: no ignition, and no
     // typewriter either, so `ignited` never needs to flip
     if (prefersReducedMotion()) return;
 
-    let ctx: gsap.Context | undefined;
+    /*
+     * Element references rather than selector strings, because the timeline is
+     * built later, on `intro:done`. A selector string inside a `gsap.context`
+     * is resolved against the context's scope, and that scoping only exists
+     * while the context function is running — so a string evaluated after it
+     * returns silently matched nothing and the whole ignition never played.
+     */
+    const fades = Array.from(el.querySelectorAll<HTMLElement>(".hero-fade"));
 
-    const run = () => {
-      ctx = gsap.context(() => {
-        const text = word.textContent ?? "";
-        word.textContent = "";
-        const chars: HTMLSpanElement[] = [];
-        for (const ch of text) {
-          const span = document.createElement("span");
-          span.className = "js-hero-char inline-block";
-          // an inline-block holding an ordinary space has it trimmed away and
-          // the words weld together, so spaces must be non breaking
-          span.textContent = ch === " " ? "\u00a0" : ch;
-          word.appendChild(span);
-          chars.push(span);
-        }
+    let play: (() => void) | undefined;
 
-        gsap.set(".hero-name", { scale: 0.42, opacity: 1, transformOrigin: "50% 50%" });
-        gsap.set(".hero-fade", { opacity: 0, y: 18 });
+    /*
+     * Priming happens now; only the playing waits for the panel.
+     *
+     * These used to be the same step, which meant the hero was revealed in its
+     * finished state \u2014 name at full size, tagline visible \u2014 and then snapped
+     * back to the starting pose the instant `intro:done` fired. The opening
+     * read as big, small, big. The panel lifts *before* that event, so
+     * anything the timeline starts from has to be set before the panel goes.
+     */
+    const ctx = gsap.context(() => {
+      const text = word.textContent ?? "";
+      word.textContent = "";
+      const chars: HTMLSpanElement[] = [];
+      for (const ch of text) {
+        const span = document.createElement("span");
+        span.className = "js-hero-char inline-block";
+        // an inline-block holding an ordinary space has it trimmed away and
+        // the words weld together, so spaces must be non breaking
+        span.textContent = ch === " " ? "\u00a0" : ch;
+        word.appendChild(span);
+        chars.push(span);
+      }
 
+      gsap.set(name, { scale: 0.42, opacity: 1, transformOrigin: "50% 50%" });
+      gsap.set(fades, { opacity: 0, y: 18 });
+
+      play = () => {
         gsap
           .timeline({
             onComplete: () => {
@@ -116,25 +135,27 @@ export default function Hero() {
             ease: "power1.out",
             stagger: 0.07,
           })
-          .to(".hero-name", { scale: 1, duration: 0.9, ease: "back.out(1.3)" }, ">-0.05")
+          .to(name, { scale: 1, duration: 0.9, ease: "back.out(1.3)" }, ">-0.05")
           .to(
-            ".hero-fade",
+            fades,
             { opacity: 1, y: 0, duration: 0.7, ease: "power3.out", stagger: 0.12 },
             "<0.25",
           );
-      }, el);
-    };
+      };
+    }, el);
 
     if (document.documentElement.dataset.introDone === "true") {
-      run();
-      return () => ctx?.revert();
+      play?.();
+      return () => ctx.revert();
     }
 
-    // otherwise the ignition would play behind the opening panel
-    window.addEventListener("intro:done", run, { once: true });
+    // otherwise the ignition would run behind the opening panel and be over
+    // before anyone saw it
+    const onDone = () => play?.();
+    window.addEventListener("intro:done", onDone, { once: true });
     return () => {
-      window.removeEventListener("intro:done", run);
-      ctx?.revert();
+      window.removeEventListener("intro:done", onDone);
+      ctx.revert();
     };
   }, []);
 
