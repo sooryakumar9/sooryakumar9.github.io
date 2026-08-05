@@ -75,8 +75,50 @@ export const audiences = [
   },
 ] as const;
 
-/** Fundamentals, and the wider toolchain. A typeset index, never a logo wall. */
+/**
+ * What I can do on a team, the stack I do it with, and what I hold to.
+ *
+ * `capabilities` is what the site shows. Each one is a pattern that appears in
+ * more than one thing I built, and each names the work it came from, because a
+ * claim nobody can check is worth nothing on a portfolio. `evidence` holds the
+ * slugs so the cards cannot drift from the case studies they point at.
+ *
+ * `fundamentals` stays for the résumé alone. Coursework is assumed by anyone
+ * reading a portfolio, but it is still what a screener matches on.
+ */
 export const foundations = {
+  capabilities: [
+    {
+      title: "AI and retrieval",
+      body: "Systems that read unstructured text and return something a person can act on. Analysis and matching share one representation, so what a user is told and what they see agree.",
+      evidence: ["resume-analyzer", "diavo"],
+    },
+    {
+      title: "Security and authentication",
+      body: "Designing against the attacker who does not exist yet. A second factor that gates the transfer rather than the login, and key exchange chosen for what breaks in ten years.",
+      evidence: ["q-secure-chat", "banking-face-recognition"],
+    },
+    {
+      title: "Workflow automation",
+      body: "Turning a procedure a person performs into one a system performs. Validation moves to the front, so a bad script fails in a browser rather than on real hardware.",
+      evidence: ["hils-automation"],
+    },
+    {
+      title: "Engineering inside constraints",
+      body: "Most systems cannot be rewritten. Driving a runtime that will not move, earning the operator's trust one run at a time, and leaving the thing more capable than it was.",
+      evidence: ["hils-automation", "madhu-marga"],
+    },
+    {
+      title: "Full stack ownership",
+      body: "Taking a product from an empty repository to something deployed and in use. Schema, authentication, search, interface and release, held by one person who sees all of it.",
+      evidence: ["zenpro", "diavo"],
+    },
+    {
+      title: "Decisions you can audit",
+      body: "When software tells someone something is wrong it should say which rule decided that. Explicit logic where a model would have been quicker to build and impossible to explain.",
+      evidence: ["madhu-marga"],
+    },
+  ],
   fundamentals: [
     {
       title: "Data Structures & Algorithms",
@@ -110,9 +152,10 @@ export const foundations = {
     "Postman",
     "Git / GitHub",
   ],
-  notes: [
-    "I build things mostly to find out how they work.",
-    "Somewhere between commits there is usually a V60 brewing.",
-    "Bengaluru keeps good weather for long builds and better cafés for code reviews.",
+  /** Positions, not aphorisms. Each one is a call I have actually had to make. */
+  principles: [
+    "I would rather ship something predictable than something clever. The clever version is only satisfying until someone else has to change it.",
+    "Validation belongs at the boundary. The same mistake costs nothing in a browser and a day on a lab machine.",
+    "If a system tells you something is wrong, it should be able to show you which rule decided that.",
   ],
 } as const;

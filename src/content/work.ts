@@ -12,6 +12,7 @@ export const projects: Project[] = [
   {
     slug: "hils-automation",
     title: "Automation of the HILS Framework",
+    short: "HILS Automation",
     blurb: "A web control layer that drives a hardware in the loop simulation lab",
     category: "systems",
     status: "shipped",
@@ -48,6 +49,7 @@ export const projects: Project[] = [
   {
     slug: "resume-analyzer",
     title: "AI Résumé Analyzer & LinkedIn Job Scraper",
+    short: "Résumé Analyzer",
     blurb: "A retrieval pipeline from one document to the roles it deserves",
     category: "applications",
     status: "shipped",
@@ -79,6 +81,7 @@ export const projects: Project[] = [
   {
     slug: "banking-face-recognition",
     title: "Banking Application with Face Recognition",
+    short: "Banking Face Gate",
     blurb: "A full stack account where your face is the second key",
     category: "applications",
     status: "shipped",
@@ -339,6 +342,12 @@ export const categoryLabels: Record<string, string> = {
   applications: "Applications",
   progress: "In Progress",
 };
+
+/** The shortest correct name for a project, for tight spaces. */
+export function projectLabel(slug: string): string {
+  const p = getProject(slug);
+  return p?.short ?? p?.title ?? slug;
+}
 
 export function getProject(slug: string): Project | undefined {
   return projects.find((p) => p.slug === slug);

@@ -23,6 +23,12 @@ export type Status = "shipped" | "building";
 export type Project = {
   slug: string;
   title: string;
+  /**
+   * A shorter name for places the full title will not fit, such as the
+   * evidence links on the capability cards. Omitted when the title is already
+   * short enough, so there is still only one name to change.
+   */
+  short?: string;
   /** one line, sentence case, no trailing period */
   blurb: string;
   category: Category;
