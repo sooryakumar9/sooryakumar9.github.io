@@ -361,7 +361,14 @@ type Packet = { y: number; speed: number; seed: number; pass: boolean };
  * packets stream in from the left and burst against it, and a narrow gate lets
  * the whitelisted few through. Then the wall drops and it starts again.
  */
-const blocker = define<{ bricks: Brick[]; packets: Packet[]; gateY: number }>({
+const blocker = define<{
+  bricks: Brick[];
+  packets: Packet[];
+  gateY: number;
+  /** wall extents, measured once — the bricks never move after init */
+  wallX: number;
+  wallR: number;
+}>({
   trail: 0.5,
   init: (w, h) => {
     const rand = mulberry32(2211);
@@ -400,16 +407,23 @@ const blocker = define<{ bricks: Brick[]; packets: Packet[]; gateY: number }>({
         pass,
       });
     }
-    return { bricks, packets, gateY: gateRow * bh + bh / 2 };
+    return {
+      bricks,
+      packets,
+      gateY: gateRow * bh + bh / 2,
+      // the draw used to spread these out of the brick list on every frame,
+      // which is two arrays and two variadic calls per frame for a wall that
+      // has not moved since it was built
+      wallX: bricks.length ? Math.min(...bricks.map((b) => b.x)) : w * 0.44,
+      wallR: bricks.length ? Math.max(...bricks.map((b) => b.x + b.w)) : w * 0.7,
+    };
   },
-  draw: ({ ctx, w, h, t, intro }, { bricks, packets }) => {
+  draw: ({ ctx, w, h, t, intro }, { bricks, packets, wallX, wallR }) => {
     const a = ease(intro);
     const unit = Math.min(w, h);
     const [stage, local] = phase(t, [2.4, 3.6, 1, 1]);
     const built = stage === 0 ? local : stage === 1 ? 1 : stage === 2 ? 1 - local : 0;
     const shown = Math.floor(built * bricks.length);
-    const wallX = bricks.length ? Math.min(...bricks.map((b) => b.x)) : w * 0.44;
-    const wallR = bricks.length ? Math.max(...bricks.map((b) => b.x + b.w)) : w * 0.7;
 
     for (let i = 0; i < shown; i++) {
       const b = bricks[i];

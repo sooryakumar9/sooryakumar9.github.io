@@ -57,13 +57,6 @@
   --ease-in-out-quint: cubic-bezier(0.76, 0, 0.24, 1);
 }
 
-/* the rotating conic border angle needs a registered type to animate */
-@property --tech-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-
 /* ---------------------------------------------------------------- base --- */
 
 html {
@@ -137,6 +130,22 @@ html.lenis-active {
   scroll-behavior: auto;
 }
 
+/*
+  Navigation resets the scroll to the top, and that reset must not animate.
+
+  `scroll-behavior: smooth` above is for visitors Lenis does not cover, but it
+  applies to the router's scroll reset too — so leaving a project card from
+  halfway down the page started a long animated scroll that ran *underneath*
+  the view transition. The morph played against a moving page and the visitor
+  was left partway down a case study they had not read.
+
+  `!important` is load bearing: the value being overridden is an inline style,
+  and nothing weaker than this reaches it.
+*/
+html[data-navigating] {
+  scroll-behavior: auto !important;
+}
+
 /* ----------------------------------------------------------- keyframes --- */
 
 @keyframes page-reveal {
@@ -149,27 +158,37 @@ html.lenis-active {
   }
 }
 
+/*
+  The scale is held constant through both of these on purpose.
+
+  They used to breathe between scale(1.25) and scale(1.45). A blurred layer
+  that changes scale cannot simply be moved by the compositor — the browser
+  re-rasterizes it at each new scale to keep the blur sharp, which for a layer
+  half again the size of the viewport is expensive, continuous, and happens
+  precisely while someone is scrolling off the hero. Translation and rotation
+  are composited without any of that, and the drift reads the same.
+*/
 @keyframes smoke-drift {
   0% {
-    transform: translate(-8%, -6%) scale(1.25) rotate(0deg);
+    transform: translate(-8%, -6%) scale(1.35) rotate(0deg);
   }
   50% {
-    transform: translate(10%, 8%) scale(1.45) rotate(8deg);
+    transform: translate(10%, 8%) scale(1.35) rotate(8deg);
   }
   to {
-    transform: translate(-8%, -6%) scale(1.25) rotate(0deg);
+    transform: translate(-8%, -6%) scale(1.35) rotate(0deg);
   }
 }
 
 @keyframes smoke-drift-2 {
   0% {
-    transform: translate(6%, 10%) scale(1.3) rotate(0deg);
+    transform: translate(6%, 10%) scale(1.4) rotate(0deg);
   }
   50% {
-    transform: translate(-12%, -8%) scale(1.5) rotate(-10deg);
+    transform: translate(-12%, -8%) scale(1.4) rotate(-10deg);
   }
   to {
-    transform: translate(6%, 10%) scale(1.3) rotate(0deg);
+    transform: translate(6%, 10%) scale(1.4) rotate(0deg);
   }
 }
 
@@ -226,9 +245,9 @@ html.lenis-active {
   }
 }
 
-@keyframes tech-angle-spin {
+@keyframes tech-ring-spin {
   to {
-    --tech-angle: 360deg;
+    transform: translate(-50%, -50%) rotate(360deg);
   }
 }
 
@@ -275,10 +294,21 @@ html.lenis-active {
   inset: -30%;
   pointer-events: none;
   border-radius: 9999px;
-  /* was blur(90px) at 0.5: the haze washed teal across the whole hero and
-     read as the page being out of focus rather than as atmosphere */
-  filter: blur(70px);
+  /*
+    A radial gradient is already soft, so most of this blur was paying for
+    something the gradient gave for free — and paying per frame, because the
+    drift animation scaled the layer and a scaled blur re-rasterizes at every
+    new scale. Over a layer 1.6x the viewport, sitting on the hero, that ran
+    for exactly as long as it took to scroll into the intro.
+
+    Enough blur is kept to stop the dark gradient banding, which is why the
+    radius is not simply zero.
+  */
+  filter: blur(24px);
   opacity: 0.3;
+  /* the drift is transform-only and this keeps it on its own layer rather than
+     re-rasterizing into the page behind it */
+  will-change: transform;
 }
 
 .smoke-a {
@@ -347,21 +377,34 @@ html.lenis-active {
   isolation: isolate;
 }
 
-.tech-edge::before {
-  content: "";
+/*
+  The ring is the mask; the light inside it is what actually turns.
+
+  This was one pseudo-element whose conic gradient was swept by animating the
+  registered `--tech-angle`. Animating a custom property is not compositable, so
+  every frame cost a style recalc and a full repaint of that gradient through a
+  dual layer mask — and since one card is always active, it ran for the whole
+  time a visitor spent scrolling. It was 140ms of paint per 1.4s of scroll,
+  measured: the largest single rendering cost on the page.
+
+  Splitting it in two fixes that. The mask sits on a box that never moves, and a
+  static gradient rotates inside it, which the compositor does without
+  repainting. Paint drops to the same number as deleting the effect entirely.
+*/
+.tech-ring {
   position: absolute;
-  inset: -1px;
+  /*
+    Flush with the card, not `-1px` outside it. Every card that uses this also
+    sets `overflow: hidden`, and the mask leaves only the outermost pixel — so
+    an inset of -1px put the entire visible ring in the one place the card
+    clips away. Measured: the lit arc lost 90% of its pixels.
+  */
+  inset: 0;
   z-index: -1;
   border-radius: inherit;
   padding: 1px;
-  background: conic-gradient(
-    from var(--tech-angle),
-    transparent 0deg,
-    var(--c-accent) 40deg,
-    var(--c-accent-deep) 80deg,
-    transparent 140deg,
-    transparent 360deg
-  );
+  overflow: hidden;
+  pointer-events: none;
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -370,20 +413,81 @@ html.lenis-active {
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   mask-composite: exclude;
-  animation: tech-angle-spin 6s linear infinite;
   opacity: 0;
   transition: opacity 0.4s var(--ease-out-quint);
 }
 
-.tech-edge[data-active="true"]::before,
-.tech-edge:hover::before,
-.tech-edge:focus-within::before {
+.tech-ring::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* square, and wide enough that the corners of a landscape card stay covered
+     through a full turn */
+  width: 240%;
+  aspect-ratio: 1;
+  /*
+    A wider arc than the original's 40/80/140. That gradient was anchored to
+    the card's own box, so its angular sweep mapped unevenly onto a landscape
+    border and kept most of the edge lit at once. A gradient on a square does
+    not distort the same way, so the span is opened up to keep the border
+    feeling continuously alive rather than swept by a narrow highlight.
+  */
+  background: conic-gradient(
+    transparent 0deg,
+    var(--c-accent) 90deg,
+    var(--c-accent-deep) 180deg,
+    transparent 300deg,
+    transparent 360deg
+  );
+  transform: translate(-50%, -50%);
+  /* only runs while the ring is visible; see the rule below */
+  animation: tech-ring-spin 6s linear infinite paused;
+}
+
+/*
+ * Only a visible ring turns. Declared unconditionally, this ran on all nine of
+ * these on the home page for the life of the session, including the seven at
+ * `opacity: 0` where nobody could see it.
+ */
+.tech-edge[data-active="true"] .tech-ring,
+.tech-edge:hover .tech-ring,
+.tech-edge:focus-within .tech-ring {
   opacity: 1;
+}
+
+.tech-edge[data-active="true"] .tech-ring::after,
+.tech-edge:hover .tech-ring::after,
+.tech-edge:focus-within .tech-ring::after {
+  animation-play-state: running;
 }
 
 /* the head script decides this before first paint; see layout.tsx */
 [data-intro="skip"] .preloader {
   display: none;
+}
+
+/*
+  The loading bar reads its width from a custom property the preloader's rAF
+  loop writes, rather than from a GSAP tween.
+
+  It is the element a visitor judges the load by, and it has to stay smooth
+  through exactly the moments when the main thread is busiest — parsing the
+  bundle and hydrating. A transform driven this way is composited, so it keeps
+  moving through a block that would stall anything on the ticker.
+*/
+.preloader {
+  --pre-progress: 0;
+}
+
+.pre-bar {
+  transform: scaleX(var(--pre-progress));
+  transform-origin: left center;
+  /* Long enough to still be travelling across a main thread block, short
+     enough that the bar arrives about when the counter reads 100. Tuned
+     against the floor in `pageReady.ts`: much slower and the panel starts
+     lifting while the bar is visibly short of full. */
+  transition: transform 0.65s linear;
 }
 
 /* the thin travelling line under the scroll cue */
@@ -491,13 +595,50 @@ html.lenis-active {
   animation-timing-function: var(--ease-out-expo);
 }
 
-/* the morphing pair must not also cross fade, or it ghosts mid flight */
+/*
+  The pair morphs on geometry, so the two snapshots must not also cross fade at
+  full strength or the thing ghosts against itself mid flight.
+
+  `height`/`object-fit` used to be pinned here, which defeated the morph: it
+  forced the outgoing 2.2:1 card art to be cropped into the 3:1 banner instead
+  of letting the group interpolate the box. Left to the default the snapshot
+  keeps its aspect and the group does the work.
+
+  The old snapshot still fades, quickly. It has to: navigating *away* from a
+  case study to a page with no artwork leaves this name unpaired, and with
+  `animation: none` that lone snapshot sat fully opaque for the whole half
+  second and then hard cut.
+*/
 ::view-transition-old(project-art),
-::view-transition-new(project-art) {
-  animation: none;
+::view-transition-old(project-title) {
+  animation: vt-morph-out 0.5s var(--ease-out-expo) both;
   mix-blend-mode: normal;
-  height: 100%;
-  object-fit: cover;
+}
+
+::view-transition-new(project-art),
+::view-transition-new(project-title) {
+  animation: vt-morph-in 0.5s var(--ease-out-expo) both;
+  mix-blend-mode: normal;
+}
+
+@keyframes vt-morph-out {
+  0% {
+    opacity: 1;
+  }
+  60%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-morph-in {
+  0%,
+  15% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

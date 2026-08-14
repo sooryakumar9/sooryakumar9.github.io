@@ -34,14 +34,30 @@ export default function HeroField({
    * frames a second of a field that takes seconds to visibly change.
    */
   fps,
+  /**
+   * Fired once the field has actually painted a frame.
+   *
+   * Compiling and linking this shader stalls the main thread synchronously, and
+   * the first draw is the moment the GPU pipeline is genuinely warm. The
+   * opening panel waits on this, so the hero is never revealed mid build.
+   */
+  onReady,
 }: {
   className?: string;
   interactive?: boolean;
   dim?: number;
   fps?: number;
+  onReady?: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [failed, setFailed] = useState(false);
+  // held in a ref so a new callback identity on re-render cannot tear down and
+  // rebuild the whole GL context. Written in an effect rather than during
+  // render, which is the only safe time to touch a ref.
+  const readyRef = useRef(onReady);
+  useEffect(() => {
+    readyRef.current = onReady;
+  }, [onReady]);
   // rebuilds the GL context on toggle, so the field either drifts or holds a
   // single settled frame, matching whatever the rest of the page is doing
   const motionOff = useMotionOff();
@@ -58,7 +74,10 @@ export default function HeroField({
       powerPreference: "low-power",
     });
     if (!gl) {
+      // the 2D fallback takes over; the panel must not wait on a frame that
+      // this path is never going to paint
       setFailed(true);
+      readyRef.current?.();
       return;
     }
 
@@ -80,6 +99,7 @@ export default function HeroField({
 
     if (!vs || !fs || !program) {
       setFailed(true);
+      readyRef.current?.();
       return;
     }
 
@@ -89,6 +109,7 @@ export default function HeroField({
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
       gl.deleteProgram(program);
       setFailed(true);
+      readyRef.current?.();
       return;
     }
     gl.useProgram(program);
@@ -114,8 +135,17 @@ export default function HeroField({
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
-      // a soft field does not need device pixels; half resolution is plenty
-      const scale = Math.min(window.devicePixelRatio || 1, 2) * 0.55;
+      /*
+       * A soft field does not need device pixels.
+       *
+       * 0.42 rather than 0.55: the fragment shader runs six 3D simplex noise
+       * evaluations per pixel, so this is the single biggest lever on how much
+       * GPU the hero costs, and it costs it across the whole viewport for as
+       * long as any part of the hero is on screen — including while the visitor
+       * is scrolling away from it. Dropping from 0.55 to 0.42 is 42% fewer
+       * fragments. There are no edges in fbm noise to give the difference away.
+       */
+      const scale = Math.min(window.devicePixelRatio || 1, 2) * 0.42;
       const w = Math.max(1, Math.round(rect.width * scale));
       const h = Math.max(1, Math.round(rect.height * scale));
       if (canvas.width === w && canvas.height === h) return;
@@ -172,6 +202,13 @@ export default function HeroField({
     const minGap = fps ? 1000 / fps : 0;
     let painted = -Infinity;
 
+    let announced = false;
+    const announce = () => {
+      if (announced) return;
+      announced = true;
+      readyRef.current?.();
+    };
+
     function frame(now: number) {
       raf = 0;
       if (!visible) return;
@@ -181,6 +218,7 @@ export default function HeroField({
       if (now - painted >= minGap) {
         painted = now;
         draw((now - start) / 1000);
+        announce();
       }
       raf = requestAnimationFrame(frame);
     }
@@ -188,6 +226,9 @@ export default function HeroField({
     if (reduced) {
       // one settled frame, far enough in that the field has developed
       draw(24);
+      // motion off still has to report in, or the panel would sit waiting on a
+      // frame that is never coming and only lift on its ceiling
+      announce();
     } else {
       raf = requestAnimationFrame(frame);
     }

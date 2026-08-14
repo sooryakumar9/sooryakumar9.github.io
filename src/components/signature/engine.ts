@@ -9,6 +9,15 @@ type Entry = {
   state: unknown;
   w: number;
   h: number;
+  /** the DPR the backing store was last sized at, so resize can no-op */
+  dpr: number;
+  /** multiplier on the backing store, for canvases drawn scaled up by CSS */
+  resolution: number;
+  /** widest the drawing box may get before it is letterboxed inside the canvas */
+  maxAspect: number;
+  /** the box the program actually draws into, and where it sits in the canvas */
+  drawH: number;
+  offsetY: number;
   visible: boolean;
   start: number;
   /** smoothed pointer, in CSS px relative to the canvas */
@@ -100,20 +109,32 @@ function drawEntry(entry: Entry, now: number) {
     ctx.clearRect(0, 0, w, h);
   }
 
+  /*
+   * The clear and the wash above deliberately cover the *whole* canvas, not
+   * just the letterboxed drawing area. `BG` and the card surface are different
+   * shades, so washing only the middle would draw two horizontal seams across
+   * any trailing program.
+   */
   const frame: Frame = {
     ctx,
     w,
-    h,
+    h: entry.drawH,
     t,
     px: entry.px,
-    py: entry.py,
+    // the pointer arrives relative to the canvas; the program thinks in the
+    // letterboxed box, so it has to be rebased or the art reacts at the wrong
+    // height
+    py: entry.py === null ? null : entry.py - entry.offsetY,
     intro: Math.min(1, t / 1.2),
   };
 
+  ctx.save();
+  ctx.translate(0, entry.offsetY);
   // programs draw additively so overlapping light accumulates and glows
   ctx.globalCompositeOperation = "lighter";
   entry.program.draw(frame, entry.state);
   ctx.globalCompositeOperation = "source-over";
+  ctx.restore();
 }
 
 /** Sizes the backing store to the element box at the current DPR. */
@@ -121,15 +142,53 @@ function resize(entry: Entry) {
   const rect = entry.canvas.getBoundingClientRect();
   const w = Math.max(1, Math.round(rect.width));
   const h = Math.max(1, Math.round(rect.height));
-  // capping at 2 keeps 3x phones from paying for pixels nobody can see
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  /*
+   * Capping at 2 keeps 3x phones from paying for pixels nobody can see, and
+   * `resolution` handles the opposite case: a canvas the layout scales up.
+   * `getBoundingClientRect` reports the post transform box, so a wrapper with
+   * `scale-125` silently asks for 1.5625x the pixels it can actually show and
+   * the surplus is clipped away unseen.
+   */
+  const dpr = Math.min(2, window.devicePixelRatio || 1) * entry.resolution;
+
+  /*
+   * Nothing to do if the box has not actually changed, and skipping is not
+   * just an optimisation.
+   *
+   * `init` reseeds the whole composition, so any spurious observer fire
+   * restarts the animation from nothing. ResizeObserver delivers one callback
+   * on observe, which meant every canvas was built twice on mount, and the
+   * switch to `position: fixed` when ScrollTrigger pins the featured stage can
+   * fire it again — resetting five canvases at the exact moment the visitor
+   * scrolls into them.
+   */
+  if (w === entry.w && h === entry.h && dpr === entry.dpr && entry.state !== undefined) return;
+
+  /*
+   * Letterbox rather than let a tall box inflate the drawing.
+   *
+   * Every program sizes its elements off `Math.min(w, h)`, and these boxes are
+   * wider than they are tall, so that unit *is* the height. Grow the panel and
+   * everything drawn grows with it: raising the featured card's art from 240 to
+   * 478px took the unit from 300 to 518 and turned pill shaped controls into
+   * circles, because their height is unit derived while their width is not.
+   *
+   * So the program is handed the landscape box it was composed for, centred in
+   * whatever space it has been given.
+   */
+  const drawH = Number.isFinite(entry.maxAspect)
+    ? Math.max(1, Math.min(h, Math.round(w / entry.maxAspect)))
+    : h;
 
   entry.w = w;
   entry.h = h;
+  entry.dpr = dpr;
+  entry.drawH = drawH;
+  entry.offsetY = Math.round((h - drawH) / 2);
   entry.canvas.width = Math.round(w * dpr);
   entry.canvas.height = Math.round(h * dpr);
   entry.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  entry.state = entry.program.init(w, h);
+  entry.state = entry.program.init(w, drawH);
 
   // a trailing program needs an opaque base or the wash never converges
   if ((entry.program.trail ?? 0) > 0) {
@@ -153,6 +212,8 @@ export function attach(
   canvas: HTMLCanvasElement,
   program: Program<never>,
   still: boolean,
+  resolution = 1,
+  maxAspect = Infinity,
 ): Handle | null {
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
@@ -165,6 +226,11 @@ export function attach(
     state: undefined,
     w: 0,
     h: 0,
+    dpr: 0,
+    resolution,
+    maxAspect,
+    drawH: 0,
+    offsetY: 0,
     visible: false,
     start: performance.now(),
     px: null,

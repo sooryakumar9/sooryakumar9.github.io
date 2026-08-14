@@ -1,6 +1,7 @@
 import TransitionLink from "@/components/motion/TransitionLink";
 import Reveal from "@/components/motion/Reveal";
 import Signature from "@/components/signature/Signature";
+import TechRing from "@/components/chrome/TechRing";
 import { benchSlugs, projectsBySlugs } from "@/content/work";
 import ScrambleText from "@/components/motion/ScrambleText";
 
@@ -34,10 +35,14 @@ export default function Bench() {
               data-cursor-label="Read"
               className="tech-edge rounded-frame border-line bg-surface flex h-full flex-col overflow-hidden border"
             >
+              <TechRing />
               <div className="border-line relative h-44 border-b md:h-52">
                 <Signature variant={p.signature} />
                 {p.live && (
-                  <span className="border-line bg-bg/70 text-muted rounded-chip absolute top-4 right-4 flex items-center gap-2 border px-3 py-1 font-mono text-xs backdrop-blur">
+                  // opaque rather than backdrop-blurred: the canvas behind it
+                  // repaints every frame, and each of those frames would drag
+                  // a backdrop read and blur along with it
+                  <span className="border-line bg-bg/90 text-muted rounded-chip absolute top-4 right-4 flex items-center gap-2 border px-3 py-1 font-mono text-xs">
                     <span aria-hidden className="status-dot" />
                     Live
                   </span>

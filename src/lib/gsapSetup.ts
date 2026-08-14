@@ -2,18 +2,21 @@
 
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { Observer } from "gsap/Observer";
-import { Flip } from "gsap/Flip";
-import { SplitText } from "gsap/SplitText";
 import { isMotionOff } from "./motion";
 
 /**
  * Plugin registration happens once, on the client only. Every module that
  * animates imports `gsap` from here rather than from the package, so nothing
  * can accidentally run before the plugins exist.
+ *
+ * Only what every route actually needs is registered here. `Observer` and
+ * `SplitText` were registered and referenced nowhere. `Flip` is used by exactly
+ * one component, the filter grid on `/work`, and registering it here put 24KB
+ * of it in the home page's bundle to be parsed before the hero could paint —
+ * so it now registers itself where it is used.
  */
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger, Observer, Flip, SplitText);
+  gsap.registerPlugin(ScrollTrigger);
 }
 
 /**
@@ -34,4 +37,4 @@ export function hasFinePointer(): boolean {
   return window.matchMedia("(pointer: fine)").matches;
 }
 
-export { gsap, ScrollTrigger, Observer, Flip, SplitText };
+export { gsap, ScrollTrigger };

@@ -4,6 +4,7 @@ import TransitionLink from "@/components/motion/TransitionLink";
 import { useLayoutEffect, useRef, useState } from "react";
 import { gsap, ScrollTrigger } from "@/lib/gsapSetup";
 import Signature from "@/components/signature/Signature";
+import TechRing from "@/components/chrome/TechRing";
 import Reveal from "@/components/motion/Reveal";
 import { featuredSlugs, projectsBySlugs } from "@/content/work";
 import ScrambleText from "@/components/motion/ScrambleText";
@@ -160,16 +161,39 @@ export default function FeaturedWork() {
               data-cursor-label="Read"
               className="fw-card tech-edge rounded-frame border-line bg-surface relative w-[82vw] shrink-0 snap-center overflow-hidden border md:w-[46vw] lg:w-[36vw]"
             >
-              <div className="border-line relative h-48 overflow-hidden border-b md:h-60">
-                <div data-vt-art className="fw-art absolute inset-0 scale-125">
-                  <Signature variant={p.signature} />
+              <TechRing />
+              {/* Two things are deliberate about this box.
+
+                  Its height sits just above what the letterboxed art needs, so
+                  the space above and below reads as padding rather than as a
+                  strip stranded in an empty panel.
+
+                  And `data-vt-art` names this element rather than `.fw-art`
+                  inside it. A view transition snapshot ignores ancestor
+                  clipping, so naming the scaled, parallax drifting child
+                  captured the whole 125% canvas bleeding outside the card, from
+                  an offset that moved with scroll. This is the visible frame. */}
+              <div
+                data-vt-art
+                className="border-line relative h-48 overflow-hidden border-b md:h-[300px] lg:h-[336px]"
+              >
+                <div className="fw-art absolute inset-0 scale-125">
+                  {/* 0.8 is the inverse of the scale-125 above, so the canvas
+                      is drawn at the size it is actually shown at instead of
+                      1.5625x it with the surplus clipped off. maxAspect keeps
+                      the composition landscape however tall the card gets. */}
+                  <Signature variant={p.signature} resolution={0.8} maxAspect={2} />
                 </div>
 
                 {/* the counter rides the active card rather than sitting on a
                     control row; the buttons below stay the keyboard affordance */}
                 <span
                   aria-hidden
-                  className={`border-line bg-bg/80 rounded-chip absolute top-4 left-4 border px-3 py-1 font-mono text-xs backdrop-blur transition-opacity duration-500 ${
+                  // no backdrop-blur: this sits directly over a canvas that
+                  // repaints every frame, and a backdrop filter re-reads and
+                  // re-blurs what is behind it every one of those frames. An
+                  // opaque plate over near black art looks the same
+                  className={`border-line bg-bg/90 rounded-chip absolute top-4 left-4 border px-3 py-1 font-mono text-xs transition-opacity duration-500 ${
                     i === index ? "opacity-100" : "opacity-0"
                   }`}
                 >

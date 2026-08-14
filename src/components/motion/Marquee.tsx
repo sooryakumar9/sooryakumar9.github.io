@@ -25,8 +25,18 @@ export default function Marquee({
     const el = ref.current;
     if (!el || prefersReducedMotion()) return;
 
+    /*
+     * Paused whenever it is off screen.
+     *
+     * This is an infinite tween, so it used to run for the entire session —
+     * writing an inline transform and forcing a style recalc every frame, for
+     * a strip the visitor had scrolled past minutes ago. It also sits directly
+     * between the hero and the intro, so it was competing for frames at
+     * precisely the moment the page had least to spare.
+     */
+    let tween: gsap.core.Tween | undefined;
     const ctx = gsap.context(() => {
-      gsap.to(".marquee-group", {
+      tween = gsap.to(".marquee-group", {
         xPercent: -100,
         repeat: -1,
         duration,
@@ -34,7 +44,16 @@ export default function Marquee({
       });
     }, el);
 
-    return () => ctx.revert();
+    const io = new IntersectionObserver(
+      ([record]) => (record.isIntersecting ? tween?.play() : tween?.pause()),
+      { rootMargin: "100px" },
+    );
+    io.observe(el);
+
+    return () => {
+      io.disconnect();
+      ctx.revert();
+    };
   }, [duration]);
 
   const group = (hidden: boolean) => (

@@ -175,7 +175,12 @@ export default function Header() {
         // deliberately not `page-shell`: its 60px desktop gutter is a page
         // measure, and inside a pill it just pushes the contents to the middle
         className={`rounded-chip pointer-events-auto relative mx-auto flex w-full max-w-[1360px] items-center justify-between gap-4 py-2.5 pr-2.5 pl-4 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:py-3 md:pr-3 md:pl-5 ${
-          lifted ? "border-line bg-bg/85 border backdrop-blur-xl" : "border border-transparent"
+          // No backdrop blur. This turns on at `y > 40` — the instant the
+          // visitor leaves the hero — and a backdrop filter re-reads and
+          // re-blurs everything behind it on every frame the page moves. It was
+          // a 24px blur across the full header width running for the entire
+          // scroll. An opaque plate is indistinguishable over this palette.
+          lifted ? "border-line bg-bg/95 border" : "border border-transparent"
         }`}
         style={widths ? { maxWidth: collapsed ? widths.shut : widths.open } : undefined}
       >

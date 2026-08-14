@@ -1,10 +1,17 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Flip, gsap, prefersReducedMotion } from "@/lib/gsapSetup";
+import { gsap, prefersReducedMotion } from "@/lib/gsapSetup";
+// Flip is imported here rather than from `gsapSetup` on purpose: this grid is
+// the only thing on the site that uses it, and registering it centrally meant
+// every route — including the home page — parsed it before first paint.
+import { Flip } from "gsap/Flip";
+
+if (typeof window !== "undefined") gsap.registerPlugin(Flip);
 import TransitionLink from "@/components/motion/TransitionLink";
 import Tilt from "@/components/motion/Tilt";
 import Signature from "@/components/signature/Signature";
+import TechRing from "@/components/chrome/TechRing";
 import { projects, categoryLabels } from "@/content/work";
 import type { Category } from "@/content/types";
 
@@ -90,10 +97,13 @@ export default function WorkIndex() {
               data-cursor-label="Read"
               className="tech-edge rounded-frame border-line bg-surface relative flex h-full flex-col overflow-hidden border"
             >
+              <TechRing />
             <div data-vt-art data-depth="-18" className="border-line relative h-40 border-b">
               <Signature variant={p.signature} />
               {p.live && (
-                <span className="border-line bg-bg/70 text-muted rounded-chip absolute top-3 right-3 flex items-center gap-2 border px-2.5 py-1 font-mono text-xs backdrop-blur">
+                // same as the bench chip: an opaque plate over a canvas that is
+                // always repainting, rather than a per frame backdrop blur
+                <span className="border-line bg-bg/90 text-muted rounded-chip absolute top-3 right-3 flex items-center gap-2 border px-2.5 py-1 font-mono text-xs">
                   <span aria-hidden className="status-dot" />
                   Live
                 </span>
