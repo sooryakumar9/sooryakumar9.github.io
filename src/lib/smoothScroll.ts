@@ -67,6 +67,23 @@ function finish() {
   pending = null;
 }
 
+/**
+ * Move the page to an absolute scroll position, animated.
+ *
+ * Lenis owns the scroll position while it is running — it writes its own
+ * animated value back every frame — so a bare `window.scrollTo` is a number it
+ * never agreed to, and it eases out of it from wherever its own animation had
+ * got to. Driving the rail from a scroll set that way overshot the target by a
+ * few hundred pixels before crawling back. Handing the target to Lenis instead
+ * leaves one animator in charge, and ScrollTrigger stays in step because it
+ * already updates off Lenis's scroll event.
+ */
+export function scrollToY(y: number, duration = 0.6) {
+  if (typeof window === "undefined") return;
+  if (lenis) lenis.scrollTo(y, { duration, force: true });
+  else window.scrollTo({ top: y, behavior: "smooth" });
+}
+
 /** Put the page back to the top with no animation, Lenis included. */
 export function jumpToTop() {
   if (typeof document === "undefined") return;

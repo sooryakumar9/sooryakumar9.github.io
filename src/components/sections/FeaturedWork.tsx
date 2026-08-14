@@ -8,6 +8,7 @@ import TechRing from "@/components/chrome/TechRing";
 import Reveal from "@/components/motion/Reveal";
 import { featuredSlugs, projectsBySlugs } from "@/content/work";
 import ScrambleText from "@/components/motion/ScrambleText";
+import { scrollToY } from "@/lib/smoothScroll";
 
 const featured = projectsBySlugs(featuredSlugs);
 
@@ -59,8 +60,16 @@ export default function FeaturedWork() {
       const st = tween.scrollTrigger!;
       seek.current = (i: number) => {
         const p = featured.length > 1 ? i / (featured.length - 1) : 0;
-        // drive the page scroll, which drives the rail
-        st.scroll(st.start + p * (st.end - st.start));
+        const span = st.end - st.start;
+        // Drive the page scroll, which drives the rail — but never land exactly
+        // on `start` or `end`. Those are the boundaries where the pin is
+        // released, and `scrub: 1` means the rail still has a second of travel
+        // left when the click arrives: the stage would unpin and the cards
+        // would slide across a section that had stopped holding the viewport.
+        // A pixel inside is 0.08% of the travel, which no one can see.
+        const edge = span > 2 ? 1 : 0;
+        const target = gsap.utils.clamp(st.start + edge, st.end - edge, st.start + p * span);
+        scrollToY(target);
       };
 
       // each canvas drifts against the rail, timed off the rail tween rather
