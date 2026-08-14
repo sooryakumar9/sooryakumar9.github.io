@@ -51,8 +51,10 @@ background — `html` paints the page — and layers stack with explicit `z-0` /
 **The hero is WebGL, the project canvases are 2D.** A fragment shader evaluates a field at
 every pixel, so it renders volume — soft masses with interiors. Stamping strokes onto a 2D
 canvas can only ever produce line art, however carefully it is tuned; that is the whole
-reason `HeroField` exists separately from `Signature`. It renders at ~0.55 resolution scale
+reason `HeroField` exists separately from `Signature`. It renders at ~0.42 resolution scale
 and is upscaled by CSS, and it falls back to the 2D `hero` program if WebGL is unavailable.
+The home hero is also capped at 30fps: the field takes seconds to visibly change and the
+pointer easing advances every frame regardless, so it follows the same curve either way.
 
 **`t` is clamped to zero in the engine, and that is load bearing.** The rAF timestamp is the
 moment the frame *started*, so the first callback after a canvas attaches can arrive slightly
@@ -97,8 +99,28 @@ Every canvas runs on its own clock. An earlier version drove some from scroll po
 which left project-page banners frozen until the visitor moved; the engine still pauses
 anything outside the viewport, which is what keeps ten of them affordable.
 
-Measured on the home page while scrolling: median 16.7ms (60fps) unthrottled, and median
-25ms / p95 41ms at 6x CPU throttle, which approximates a mid-range phone.
+**Scroll-driven setup waits for the opening, and that coupling is load bearing.** `Reveal`,
+`Intro`, `Foundations` and `Collaborate` all build their ScrollTriggers through
+`afterIntro()` rather than during hydration, because creating one measures its trigger and a
+dozen of them at once meant a dozen forced layouts in the window where the opening panel is
+trying to animate. The consequence to remember: `.js-reveal` holds those elements at
+`opacity: 0` until that work runs, so anything which prevents `intro:done` would leave the
+page blank. `afterIntro` therefore carries an 8s deadline that runs the work anyway. Do not
+remove it, and do not add a scroll-driven section that builds at hydration.
+
+**Nothing may animate a custom property.** `.tech-edge` used to sweep its border by animating
+a registered `--tech-angle`, which is a style recalc plus a full repaint of a masked conic
+gradient every frame — and since one card is always active, it ran the whole time anyone was
+scrolling. It is now `.tech-ring`: a mask that stays still with a static gradient rotated
+inside it by `transform`, which the compositor does without repainting. Measured paint over a
+scroll went from ~256ms to ~56ms. The same rule killed the animated `filter: blur()` in
+`Reveal` and the animated `scale` on the blurred `.smoke` layers.
+
+Frame timing figures move with the machine and the browser, so treat any number here as a
+direction rather than a threshold. `scripts/perf.mjs` records main-thread frames; note that
+it cannot see compositor cost, which is where most of this page's expense turned out to live
+— a trace with the `devtools.timeline` categories and the `Paint` / `RasterTask` totals is
+what actually found it.
 
 Headless Chromium logs `GPU stall due to ReadPixels` warnings on pages carrying the WebGL
 hero. That is a headless compositing artifact — a real browser logs none, and frame timing
