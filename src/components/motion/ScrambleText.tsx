@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef, type ElementType } from "react";
 import { prefersReducedMotion } from "@/lib/gsapSetup";
+import { onFirstEnter } from "@/lib/nearViewport";
 
 const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&$@/\\<>*+=";
 
@@ -85,21 +86,4 @@ export default function ScrambleText({
       </span>
     </Tag>
   );
-}
-
-/** Fires `run` the first time `el` enters the viewport. Returns a disposer. */
-function onFirstEnter(el: Element, run: () => void) {
-  const io = new IntersectionObserver(
-    (records) => {
-      for (const r of records) {
-        if (r.isIntersecting) {
-          run();
-          io.disconnect();
-        }
-      }
-    },
-    { threshold: 0.35 },
-  );
-  io.observe(el);
-  return () => io.disconnect();
 }

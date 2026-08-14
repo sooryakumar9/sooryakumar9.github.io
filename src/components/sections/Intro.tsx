@@ -5,6 +5,7 @@ import Reveal from "@/components/motion/Reveal";
 import ScrambleText from "@/components/motion/ScrambleText";
 import { audiences } from "@/content/profile";
 import { gsap, prefersReducedMotion } from "@/lib/gsapSetup";
+import { afterIntro } from "@/lib/afterIntro";
 
 /**
  * The same introduction told for different readers. A recruiter and an engineer
@@ -27,23 +28,35 @@ export default function Intro() {
     const el = panelRef.current;
     if (!el || prefersReducedMotion()) return;
 
-    const ctx = gsap.context(() => {
-      const words = el.querySelectorAll(".intro-word");
-      gsap.fromTo(
-        words,
-        { opacity: 0.12, y: 6 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.5,
-          ease: "power2.out",
-          stagger: 0.018,
-          scrollTrigger: { trigger: el, start: "top 85%", once: true },
-        },
-      );
-    }, el);
+    /*
+     * Deferred until the opening is over. the word stagger is far below the fold, and
+     * building its ScrollTrigger measures the trigger element — a forced layout
+     * during the hydration commit, in the window where the opening panel is
+     * trying to animate.
+     */
+    let ctx: gsap.Context | undefined;
+    const stop = afterIntro(() => {
+      ctx = gsap.context(() => {
+        const words = el.querySelectorAll(".intro-word");
+        gsap.fromTo(
+          words,
+          { opacity: 0.12, y: 6 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            ease: "power2.out",
+            stagger: 0.018,
+            scrollTrigger: { trigger: el, start: "top 85%", once: true },
+          },
+        );
+      }, el);
+    });
 
-    return () => ctx.revert();
+    return () => {
+      stop();
+      ctx?.revert();
+    };
   }, [active]);
 
   const select = (index: number) => setActive(index);
@@ -51,8 +64,10 @@ export default function Intro() {
   const onKeyDown = (e: React.KeyboardEvent) => {
     const last = audiences.length - 1;
     let next: number | null = null;
-    if (e.key === "ArrowDown" || e.key === "ArrowRight") next = active === last ? 0 : active + 1;
-    if (e.key === "ArrowUp" || e.key === "ArrowLeft") next = active === 0 ? last : active - 1;
+    if (e.key === "ArrowDown" || e.key === "ArrowRight")
+      next = active === last ? 0 : active + 1;
+    if (e.key === "ArrowUp" || e.key === "ArrowLeft")
+      next = active === 0 ? last : active - 1;
     if (e.key === "Home") next = 0;
     if (e.key === "End") next = last;
     if (next === null) return;
@@ -68,7 +83,12 @@ export default function Intro() {
       <div className="grid gap-10 md:grid-cols-12 md:gap-14">
         <div className="md:col-span-4">
           <Reveal>
-            <ScrambleText id="intro-heading" as="h2" className="display mb-8 block text-4xl md:text-5xl" text="Intro" />
+            <ScrambleText
+              id="intro-heading"
+              as="h2"
+              className="display mb-8 block text-4xl md:text-5xl"
+              text="Intro"
+            />
           </Reveal>
 
           <Reveal delay={0.05}>

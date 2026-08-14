@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef } from "react";
 import { gsap, prefersReducedMotion } from "@/lib/gsapSetup";
+import { afterIntro } from "@/lib/afterIntro";
 import Magnetic from "@/components/motion/Magnetic";
 import { profile } from "@/content/profile";
 
@@ -17,16 +18,33 @@ export default function Collaborate() {
     const el = root.current;
     if (!el || prefersReducedMotion()) return;
 
-    const ctx = gsap.context(() => {
-      gsap
-        .timeline({
-          scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: 1 },
-        })
-        .fromTo(".cta-word-a", { xPercent: -12 }, { xPercent: 8, ease: "none" }, 0)
-        .fromTo(".cta-word-b", { xPercent: 12 }, { xPercent: -8, ease: "none" }, 0);
-    }, el);
+    /*
+     * Deferred until the opening is over. the closing parallax is far below the fold, and
+     * building its ScrollTrigger measures the trigger element — a forced layout
+     * during the hydration commit, in the window where the opening panel is
+     * trying to animate.
+     */
+    let ctx: gsap.Context | undefined;
+    const stop = afterIntro(() => {
+      ctx = gsap.context(() => {
+        gsap
+          .timeline({
+            scrollTrigger: {
+              trigger: el,
+              start: "top bottom",
+              end: "bottom top",
+              scrub: 1,
+            },
+          })
+          .fromTo(".cta-word-a", { xPercent: -12 }, { xPercent: 8, ease: "none" }, 0)
+          .fromTo(".cta-word-b", { xPercent: 12 }, { xPercent: -8, ease: "none" }, 0);
+      }, el);
+    });
 
-    return () => ctx.revert();
+    return () => {
+      stop();
+      ctx?.revert();
+    };
   }, []);
 
   return (
@@ -49,7 +67,10 @@ export default function Collaborate() {
           <span className="cta-word-a block">Let&rsquo;s build</span>
           <span className="cta-word-b block">
             something
-            <span aria-hidden className="star-spin text-accent ml-3 inline-block text-[0.35em] align-middle">
+            <span
+              aria-hidden
+              className="star-spin text-accent ml-3 inline-block text-[0.35em] align-middle"
+            >
               ✳
             </span>
           </span>

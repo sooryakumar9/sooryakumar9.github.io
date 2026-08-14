@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { gsap, prefersReducedMotion } from "@/lib/gsapSetup";
 import HeroField from "@/components/signature/HeroField";
 import { heroRoles, profile } from "@/content/profile";
+import { markReady } from "@/lib/pageReady";
 
 /**
  * The opening. Characters ignite from dead grey to full contrast, the word
@@ -34,41 +35,90 @@ export default function Hero() {
    */
   useLayoutEffect(() => {
     const h1 = nameRef.current;
-    if (!h1) return;
+    const holder = h1?.parentElement;
+    if (!h1 || !holder) return;
 
-    const fit = () => {
-      const holder = h1.parentElement;
-      if (!holder) return;
+    /*
+     * Width per unit of font size, for the longest role. This depends only on
+     * the resolved face, weight and tracking — not on how wide the window is —
+     * so it is measured once and again when the real font lands, rather than
+     * on every resize.
+     *
+     * All six probes go in together and are read afterwards. Setting
+     * `textContent` and reading a rect in the same loop meant six synchronous
+     * layouts of the whole document, one per role.
+     */
+    let ratio = 0;
+    const measure = () => {
       const cs = getComputedStyle(h1);
-
-      const probe = document.createElement("span");
-      probe.style.cssText =
-        "position:absolute;left:-9999px;top:0;visibility:hidden;white-space:nowrap;font-size:100px;";
-      probe.style.fontFamily = cs.fontFamily;
-      probe.style.fontWeight = cs.fontWeight;
-      probe.style.letterSpacing = cs.letterSpacing;
-      document.body.appendChild(probe);
-
-      let ratio = 0;
-      for (const role of heroRoles) {
+      const frag = document.createDocumentFragment();
+      const probes = heroRoles.map((role) => {
+        const probe = document.createElement("span");
+        probe.style.cssText =
+          "position:absolute;left:-9999px;top:0;visibility:hidden;white-space:nowrap;font-size:100px;";
+        probe.style.fontFamily = cs.fontFamily;
+        probe.style.fontWeight = cs.fontWeight;
+        probe.style.letterSpacing = cs.letterSpacing;
         probe.textContent = role;
+        frag.appendChild(probe);
+        return probe;
+      });
+
+      document.body.appendChild(frag);
+      for (const probe of probes) {
         ratio = Math.max(ratio, probe.getBoundingClientRect().width / 100);
       }
-      probe.remove();
-      if (ratio <= 0) return;
-
-      // leave room for the caret and a little breathing space
-      const avail = holder.clientWidth - 28;
-      h1.style.fontSize = `${Math.min(128, Math.max(20, avail / ratio))}px`;
+      for (const probe of probes) probe.remove();
     };
 
-    fit();
-    // the real face changes the metrics, so measure again once it lands
-    document.fonts?.ready.then(fit);
+    let lastPx = 0;
+    const fit = () => {
+      if (ratio <= 0) return;
+      // leave room for the caret and a little breathing space
+      const avail = holder.clientWidth - 28;
+      const px = Math.round(Math.min(128, Math.max(20, avail / ratio)));
+      if (px === lastPx) return;
+      lastPx = px;
+      h1.style.fontSize = `${px}px`;
+    };
 
+    /*
+     * Measured once, against the real face.
+     *
+     * This used to size the headline immediately with fallback metrics and then
+     * again on `document.fonts.ready`, so the name visibly changed size after
+     * the opening panel had already lifted. The panel now waits for fonts, so
+     * the single measurement happens behind it and the first thing the visitor
+     * sees is already correct.
+     */
+    let cancelled = false;
+    const settle = () => {
+      if (cancelled) return;
+      measure();
+      fit();
+    };
+
+    if (!document.fonts || document.fonts.status === "loaded") {
+      settle();
+    } else {
+      document.fonts.ready.then(settle).catch(settle);
+    }
+
+    /*
+     * Watch the column, not the document.
+     *
+     * This used to observe `documentElement`, whose box changes with page
+     * *height* — so inserting the featured rail's pin spacer, or any reveal
+     * that changes a section's height, re-ran a measurement that only ever
+     * cared about width. All of that happens during the first scroll, which is
+     * exactly when there was no budget for it.
+     */
     const ro = new ResizeObserver(fit);
-    ro.observe(document.documentElement);
-    return () => ro.disconnect();
+    ro.observe(holder);
+    return () => {
+      cancelled = true;
+      ro.disconnect();
+    };
   }, []);
 
   // ignition: split to chars, light them, overshoot the scale, then the rest
@@ -126,6 +176,10 @@ export default function Hero() {
               // hand the element back to plain text before the typewriter
               // starts rewriting textContent
               word.textContent = text;
+              // the promotion was for the ignition transform, which is over.
+              // Left on, these two stay composited for the session and the
+              // typewriter re-rasters a promoted layer twenty times a second
+              gsap.set([name, word], { willChange: "auto" });
               setIgnited(true);
             },
           })
@@ -159,10 +213,20 @@ export default function Hero() {
     };
   }, []);
 
-  // typewriter: delete the current role, pause, type the next, hold
+  /*
+   * Typewriter: delete the current role, pause, type the next, hold.
+   *
+   * It only runs while the hero is on screen. This used to chain timers for
+   * the life of the page, rewriting `textContent` every 35 to 70ms and forcing
+   * a layout each time, long after the visitor had scrolled a full viewport
+   * past it — so the featured rail was competing with a headline nobody could
+   * see. The canvas rule about never settling into a static state does not
+   * apply: this is text, and it is not being looked at.
+   */
   useLayoutEffect(() => {
     const word = wordRef.current;
-    if (!ignited || !word || prefersReducedMotion()) return;
+    const el = root.current;
+    if (!ignited || !word || !el || prefersReducedMotion()) return;
 
     let index = 0;
     let count = heroRoles[0].length;
@@ -194,8 +258,29 @@ export default function Hero() {
       }
     };
 
-    timer = window.setTimeout(step, 1500);
-    return () => window.clearTimeout(timer);
+    // resumes mid word rather than restarting, so coming back to the top of
+    // the page does not replay the same role from scratch
+    let running = false;
+    const start = () => {
+      if (running) return;
+      running = true;
+      timer = window.setTimeout(step, 1500);
+    };
+    const stop = () => {
+      running = false;
+      window.clearTimeout(timer);
+    };
+
+    const io = new IntersectionObserver(
+      ([record]) => (record.isIntersecting ? start() : stop()),
+      { rootMargin: "80px" },
+    );
+    io.observe(el);
+
+    return () => {
+      io.disconnect();
+      stop();
+    };
   }, [ignited]);
 
   return (
@@ -204,7 +289,13 @@ export default function Hero() {
       className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 text-center"
     >
       <div aria-hidden className="absolute inset-0 z-0">
-        <HeroField />
+        {/* the opening panel waits on this: the field reports in once it
+            has genuinely painted, so the hero is never revealed mid build */}
+        {/* Capped at 30. The field takes seconds to visibly change, and the
+            pointer easing still advances every frame — it follows the same
+            curve, just painted half as often. That halves the GPU cost of a
+            full viewport noise shader for no perceptible loss. */}
+        <HeroField fps={30} onReady={() => markReady("hero")} />
       </div>
       <div aria-hidden className="smoke smoke-a z-0" />
 

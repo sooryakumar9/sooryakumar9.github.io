@@ -8,6 +8,16 @@ import Foundations from "@/components/sections/Foundations";
 import Collaborate from "@/components/chrome/Collaborate";
 import { marqueeItems } from "@/content/profile";
 
+/*
+ * Deliberately not code split.
+ *
+ * `next/dynamic` was tried on the four below-fold client sections and made the
+ * page *larger*: 743KB to 814KB. Every one of them still server renders, so
+ * their client chunks are preloaded for hydration regardless, and splitting
+ * only bought a module wrapper per section. Lazy loading only pays when the
+ * code can genuinely be skipped, and hydrating markup that is already in the
+ * HTML is not that case.
+ */
 export default function HomePage() {
   return (
     <>

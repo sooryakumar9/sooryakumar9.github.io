@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef } from "react";
 import { gsap } from "@/lib/gsapSetup";
 import { markIntroDone } from "@/lib/clientEnv";
+import { markReady, onProgress, remainingFloor, watchFonts } from "@/lib/pageReady";
 
 const PANELS = 5;
 const WORDS = ["Design", "Build", "Ship", "Automate", "Secure"];
@@ -32,47 +33,103 @@ export default function Preloader() {
 
     document.body.style.overflow = "hidden";
 
+    // this effect runs inside the hydration commit, so reaching it *is* the
+    // milestone; fonts are awaited centrally from here too
+    markReady("hydrated");
+    watchFonts();
+
+    let raf = 0;
+    let target = 0;
+    let shown = 0;
+    let exiting = false;
+
+    /*
+     * The bar is written only when a milestone lands — four times, not sixty a
+     * second — and CSS transitions it the rest of the way.
+     *
+     * That distinction is the whole point. A value written from rAF is main
+     * thread work and stalls dead inside the very parse and hydration blocks
+     * this panel exists to cover; a transform transition is handed to the
+     * compositor and keeps moving straight through them. The counter text
+     * cannot escape the main thread, but a number skipping a few digits reads
+     * as far less broken than a progress bar that freezes.
+     */
+    const stopProgress = onProgress((p) => {
+      target = p;
+      el.style.setProperty("--pre-progress", String(p));
+    });
+
     const ctx = gsap.context(() => {
-      const counter = { v: 0 };
-      gsap.set(".pre-bar", { scaleX: 0, transformOrigin: "left center" });
+      const exit = () => {
+        if (exiting) return;
+        exiting = true;
+        gsap
+          .timeline({
+            onComplete: () => {
+              document.body.style.overflow = "";
+              markIntroDone();
+            },
+          })
+          .to(".pre-line", {
+            yPercent: -140,
+            duration: 0.55,
+            ease: "power3.in",
+            stagger: 0.05,
+          })
+          // the slats lift in sequence, which reads as a curtain rather than a fade
+          .to(
+            ".pre-panel",
+            {
+              yPercent: -100,
+              duration: 0.85,
+              ease: "power3.inOut",
+              stagger: 0.07,
+            },
+            "-=0.15",
+          )
+          .set(el, { display: "none" });
+      };
 
-      const tl = gsap.timeline({
-        onComplete: () => {
-          document.body.style.overflow = "";
-          markIntroDone();
-        },
-      });
+      /*
+       * The counter chases real progress instead of running a fixed tween.
+       *
+       * It also never quite catches up: easing toward the target means the
+       * number keeps creeping between milestones rather than freezing on 30
+       * and jumping to 60, which is what makes a loader feel stuck. The last
+       * few percent only arrive when the page genuinely is ready.
+       */
+      const tick = () => {
+        raf = requestAnimationFrame(tick);
+        // gentle while there is still something to wait for, brisk once there
+        // is not: a page that was ready in half a second should not be held
+        // behind a counter still sauntering toward 100
+        shown += (target - shown) * (target >= 1 ? 0.22 : 0.08);
+        const v = Math.min(100, Math.round(shown * 100));
 
-      tl.to(counter, {
-        v: 100,
-        duration: 1.5,
-        ease: "power2.inOut",
-        onUpdate: () => {
-          const v = Math.round(counter.v);
-          // unpadded: the number widens from one digit to three as it climbs,
-          // and since it is the left item of a `justify-between` row it grows
-          // into the empty middle. The word block on the right stays pinned.
-          if (countRef.current) countRef.current.textContent = String(v);
-          // the word steps with the count rather than on its own timer, so the
-          // two never drift out of sync
-          if (wordRef.current) {
-            wordRef.current.textContent =
-              WORDS[Math.min(WORDS.length - 1, Math.floor((v / 100) * WORDS.length))];
-          }
-        },
-      })
-        .to(".pre-bar", { scaleX: 1, duration: 1.5, ease: "power2.inOut" }, 0)
-        .to(".pre-line", { yPercent: -140, duration: 0.55, ease: "power3.in", stagger: 0.05 })
-        // the slats lift in sequence, which reads as a curtain rather than a fade
-        .to(
-          ".pre-panel",
-          { yPercent: -100, duration: 0.85, ease: "power3.inOut", stagger: 0.07 },
-          "-=0.15",
-        )
-        .set(el, { display: "none" });
+        // unpadded: the number widens from one digit to three as it climbs,
+        // and since it is the left item of a `justify-between` row it grows
+        // into the empty middle. The word block on the right stays pinned.
+        if (countRef.current) countRef.current.textContent = String(v);
+        // the word steps with the count rather than on its own timer, so the
+        // two never drift out of sync
+        if (wordRef.current) {
+          wordRef.current.textContent =
+            WORDS[Math.min(WORDS.length - 1, Math.floor((v / 100) * WORDS.length))];
+        }
+
+        if (target >= 1 && shown > 0.985 && remainingFloor() === 0) {
+          cancelAnimationFrame(raf);
+          raf = 0;
+          if (countRef.current) countRef.current.textContent = "100";
+          exit();
+        }
+      };
+      raf = requestAnimationFrame(tick);
     }, el);
 
     return () => {
+      if (raf) cancelAnimationFrame(raf);
+      stopProgress();
       ctx.revert();
       document.body.style.overflow = "";
     };
@@ -114,6 +171,8 @@ export default function Preloader() {
         </div>
 
         <div className="bg-line mt-6 h-px w-full overflow-hidden">
+          {/* scaled from a custom property the rAF loop writes, so the bar is
+              a compositor transform rather than a main thread tween */}
           <div className="pre-bar bg-accent h-full w-full origin-left" />
         </div>
       </div>

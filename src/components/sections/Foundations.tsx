@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef } from "react";
 import { gsap, prefersReducedMotion } from "@/lib/gsapSetup";
+import { afterIntro } from "@/lib/afterIntro";
 import Reveal from "@/components/motion/Reveal";
 import { foundations } from "@/content/profile";
 import { projectLabel } from "@/content/work";
@@ -29,43 +30,63 @@ export default function Foundations() {
     const list = deck.current;
     if (!el || !list || prefersReducedMotion()) return;
 
-    const ctx = gsap.context(() => {
-      const cards = gsap.utils.toArray<HTMLElement>(".fd-card", list);
-      if (!cards.length) return;
+    /*
+     * Deferred until the opening is over. the card deal-in is far below the fold, and
+     * building its ScrollTrigger measures the trigger element — a forced layout
+     * during the hydration commit, in the window where the opening panel is
+     * trying to animate.
+     */
+    let ctx: gsap.Context | undefined;
+    const stop = afterIntro(() => {
+      ctx = gsap.context(() => {
+        const cards = gsap.utils.toArray<HTMLElement>(".fd-card", list);
+        if (!cards.length) return;
 
-      const listRect = list.getBoundingClientRect();
+        const listRect = list.getBoundingClientRect();
 
-      cards.forEach((card, i) => {
-        const rect = card.getBoundingClientRect();
-        // offset that would put this card at the centre of the row
-        const dx = listRect.left + listRect.width / 2 - (rect.left + rect.width / 2);
-
-        // the tilt belongs to the flight, not the resting state. Landing askew
-        // was fine on a 238px card and reads as crooked on a 403px one holding
-        // a paragraph, so the cards spin a little on the way in and settle square
-        gsap.set(card, {
-          x: dx,
-          y: 40,
-          rotate: gsap.utils.wrap([-5, 3, -2, 4, -3.5, 2.5])(i),
-          scale: 0.92,
-          opacity: 0,
-          zIndex: cards.length - i,
+        /*
+         * Every measurement first, then every write. Interleaved, each `gsap.set`
+         * invalidated the layout that the next `getBoundingClientRect` then had
+         * to rebuild — six synchronous layouts of the whole document, during
+         * hydration, for a section well below the fold.
+         */
+        const centres = cards.map((card) => {
+          const rect = card.getBoundingClientRect();
+          // offset that would put this card at the centre of the row
+          return listRect.left + listRect.width / 2 - (rect.left + rect.width / 2);
         });
-        gsap.to(card, {
-          x: 0,
-          y: 0,
-          scale: 1,
-          opacity: 1,
-          rotate: 0,
-          duration: 1,
-          ease: "power3.out",
-          delay: i * 0.08,
-          scrollTrigger: { trigger: list, start: "top 80%", once: true },
-        });
-      });
-    }, el);
 
-    return () => ctx.revert();
+        cards.forEach((card, i) => {
+          // the tilt belongs to the flight, not the resting state. Landing askew
+          // was fine on a 238px card and reads as crooked on a 403px one holding
+          // a paragraph, so the cards spin a little on the way in and settle square
+          gsap.set(card, {
+            x: centres[i],
+            y: 40,
+            rotate: gsap.utils.wrap([-5, 3, -2, 4, -3.5, 2.5])(i),
+            scale: 0.92,
+            opacity: 0,
+            zIndex: cards.length - i,
+          });
+          gsap.to(card, {
+            x: 0,
+            y: 0,
+            scale: 1,
+            opacity: 1,
+            rotate: 0,
+            duration: 1,
+            ease: "power3.out",
+            delay: i * 0.08,
+            scrollTrigger: { trigger: list, start: "top 80%", once: true },
+          });
+        });
+      }, el);
+    });
+
+    return () => {
+      stop();
+      ctx?.revert();
+    };
   }, []);
 
   return (
@@ -81,9 +102,8 @@ export default function Foundations() {
             What I bring to an engineering team
           </h2>
           <p className="text-muted mt-5 max-w-2xl">
-            Each of these comes from something I shipped rather than something I
-            studied. The projects are the evidence; these are the patterns
-            across them.
+            Each of these comes from something I shipped rather than something I studied.
+            The projects are the evidence; these are the patterns across them.
           </p>
         </div>
       </Reveal>
