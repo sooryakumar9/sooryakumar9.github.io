@@ -239,7 +239,7 @@ export default function FeaturedWork() {
           ))}
         </div>
 
-        <div className="page-shell mt-8 flex items-center justify-end gap-4 md:mt-12">
+        <div className="page-shell mt-8 flex items-center justify-center gap-4 md:mt-12">
           {/* the visible counter now rides the active card, and that chip is
               aria-hidden, so the position is announced here instead */}
           <p className="sr-only" aria-live="polite">
