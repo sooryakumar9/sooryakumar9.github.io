@@ -73,32 +73,37 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
             </p>
           </Reveal>
 
-          <Reveal delay={0.08}>
-            <h1
-              data-vt-title
-              style={{ viewTransitionName: "project-title" }}
-              className="display mb-6 max-w-4xl text-4xl md:text-7xl"
-            >
-              {project.title}
-            </h1>
-          </Reveal>
+          {/* Not wrapped in Reveal, and neither is the banner below.
+              Reveal starts its targets at `opacity: 0`, shifted down and
+              blurred, which is precisely the state a view transition would
+              capture as the *arrival* of the morph — so the title appeared to
+              vanish rather than travel. An element that morphs in should not
+              also rise and unblur; that is two entrances competing. */}
+          <h1
+            data-vt-title
+            style={{ viewTransitionName: "project-title" }}
+            className="display mb-6 max-w-4xl text-4xl md:text-7xl"
+          >
+            {project.title}
+          </h1>
 
           <Reveal delay={0.12}>
             <p className="text-muted max-w-2xl text-lg md:text-xl">{project.blurb}</p>
           </Reveal>
         </header>
 
-        <Reveal>
-          <div className="page-shell">
-            <div
-              data-vt-art
-              style={{ viewTransitionName: "project-art" }}
-              className="rounded-frame border-line relative h-64 overflow-hidden border md:h-[420px]"
-            >
-              <Signature variant={project.signature} />
-            </div>
+        <div className="page-shell">
+          <div
+            data-vt-art
+            style={{ viewTransitionName: "project-art" }}
+            className="rounded-frame border-line relative h-64 overflow-hidden border md:h-[420px]"
+          >
+            {/* eager: this is the far side of the card morph, so it has to be
+                drawn by the time the transition photographs the new page.
+                Deferring it to the viewport observer left the arrival blank. */}
+            <Signature variant={project.signature} eager />
           </div>
-        </Reveal>
+        </div>
 
         <div className="page-shell grid gap-12 py-16 md:grid-cols-12 md:gap-10 md:py-24">
           <aside className="md:col-span-4">

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ComponentProps, MouseEvent } from "react";
 import { useMotionOff } from "@/lib/motion";
+import { beginNavigation, endNavigation, isNavigating } from "@/lib/smoothScroll";
 
 type WithVT = Document & {
   startViewTransition?: (cb: () => void | Promise<void>) => { finished: Promise<void> };
@@ -48,6 +49,10 @@ export default function TransitionLink({ morphFrom, onClick, href, ...rest }: Pr
 
     e.preventDefault();
 
+    // a second click while one is in flight would start a transition whose
+    // names the first one's cleanup then wipes
+    if (isNavigating()) return;
+
     const named: HTMLElement[] = [];
     if (morphFrom) {
       const card = e.currentTarget.closest<HTMLElement>(morphFrom);
@@ -66,14 +71,21 @@ export default function TransitionLink({ morphFrom, onClick, href, ...rest }: Pr
       }
     }
 
-    const transition = doc.startViewTransition(() => {
-      router.push(url);
-    });
+    /*
+     * The callback must not settle until the new route has actually rendered.
+     * `router.push` only schedules the navigation, so resolving on the call
+     * photographed the old page as both the before and the after — which is
+     * why no transition on the site appeared to do anything.
+     */
+    const transition = doc.startViewTransition(() =>
+      beginNavigation(url, () => router.push(url)),
+    );
 
     transition.finished
       .catch(() => {})
       .finally(() => {
         for (const n of named) n.style.viewTransitionName = "";
+        endNavigation();
       });
   };
 
